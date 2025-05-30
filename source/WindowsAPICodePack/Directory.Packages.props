@@ -2,5 +2,6 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageVersion Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
   </ItemGroup>
 </Project>
