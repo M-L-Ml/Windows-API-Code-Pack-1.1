@@ -11,9 +11,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Markup;
 #if FULLAPI
+using System.Windows.Markup;
 using System.Windows.Interop;
 #endif
 namespace Microsoft.WindowsAPICodePack.Dialogs
@@ -21,8 +20,10 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
     /// <summary>Defines the abstract base class for the common file dialogs.</summary>
 #if FULLAPI
     [ContentProperty("Controls")]
+#endif
     public abstract class CommonFileDialog : IDialogControlHost, IDisposable
     {
+#if FULLAPI
         // Code disabled for FULLAPI
         internal readonly Collection<IShellItem> items;
 
@@ -1198,13 +1199,21 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
             public void OnTypeChange(IFileDialog pfd) => parent.OnFileTypeChanged(EventArgs.Empty);
         }
+#else
+        // Disabled for non-FULLAPI builds
+        public void ApplyCollectionChanged() { }
+        public void ApplyControlPropertyChange(string propertyName, DialogControl control) { }
+        public bool IsCollectionChangeAllowed() => false;
+        public bool IsControlPropertyChangeAllowed(string propertyName, DialogControl control) => false;
+        public void Dispose() { }
 #endif
     }
 
+#if !FULLAPI
+    // Stub for ContentPropertyAttribute if missing
     internal class ContentPropertyAttribute : Attribute
     {
-        public ContentPropertyAttribute(string v)
-        {
-        }
+        public ContentPropertyAttribute(string v) { }
     }
+#endif
 }

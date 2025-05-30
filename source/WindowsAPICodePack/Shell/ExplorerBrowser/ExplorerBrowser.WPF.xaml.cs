@@ -4,16 +4,19 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Forms.Integration;
-using System.Windows.Threading;
 
 namespace Microsoft.WindowsAPICodePack.Controls.WindowsPresentationFoundation
 {
+#if FULLAPI
+    using System.Windows.Controls;
+    using System.Windows.Forms.Integration;
+    using System.Windows.Threading;
+#endif
+
     /// <summary>Interaction logic for ExplorerBrowser.xaml</summary>
+#if FULLAPI
     public partial class ExplorerBrowser : UserControl, IDisposable
     {
-#if FULLAPI
         // Code disabled for FULLAPI
 #else
         /// <summary>The items in the ExplorerBrowser window</summary>
