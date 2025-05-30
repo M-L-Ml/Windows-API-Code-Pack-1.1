@@ -1,4 +1,4 @@
-﻿/* Unmerged change from project 'Shell (net452)'
+/* Unmerged change from project 'Shell (net452)'
 Before:
 using System;
 using System.Windows.Interop;
@@ -42,6 +42,10 @@ using System;
 using MS.Windows;
 using System.Windows.Interop;
 */
+
+#if FULLAPI
+// Code disabled for FULLAPI
+#else
 
 using MS.WindowsAPICodePack.Internal;
 using System;
@@ -157,3 +161,5 @@ namespace Microsoft.WindowsAPICodePack.Shell
         }
     }
 }
+
+#endif

@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Shell.Resources;
 using MS.WindowsAPICodePack.Internal;
@@ -13,6 +13,9 @@ namespace Microsoft.WindowsAPICodePack.Shell
     /// <summary>Represents a thumbnail or an icon for a ShellObject.</summary>
     public class ShellThumbnail
     {
+#if FULLAPI
+        // Code disabled for FULLAPI
+#else
         /// <summary>Native shellItem</summary>
         private readonly IShellItem shellItemNative;
 
@@ -245,5 +248,6 @@ namespace Microsoft.WindowsAPICodePack.Shell
 
             throw new ShellException(hr);
         }
+#endif
     }
 }

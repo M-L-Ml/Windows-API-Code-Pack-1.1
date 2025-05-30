@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 using Microsoft.WindowsAPICodePack.Shell;
 using System;
 using System.Collections.ObjectModel;
@@ -13,6 +13,9 @@ namespace Microsoft.WindowsAPICodePack.Controls.WindowsPresentationFoundation
     /// <summary>Interaction logic for ExplorerBrowser.xaml</summary>
     public partial class ExplorerBrowser : UserControl, IDisposable
     {
+#if FULLAPI
+        // Code disabled for FULLAPI
+#else
         /// <summary>The items in the ExplorerBrowser window</summary>
         public static readonly DependencyProperty ItemsProperty = ItemsPropertyKey.DependencyProperty;
 
@@ -863,5 +866,6 @@ namespace Microsoft.WindowsAPICodePack.Controls.WindowsPresentationFoundation
                 }
             }
         }
+#endif
     }
 }

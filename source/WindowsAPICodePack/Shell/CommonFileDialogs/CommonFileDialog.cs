@@ -12,15 +12,18 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Markup;
-
+#if FULLAPI
+using System.Windows.Interop;
+#endif
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
     /// <summary>Defines the abstract base class for the common file dialogs.</summary>
+#if FULLAPI
     [ContentProperty("Controls")]
     public abstract class CommonFileDialog : IDialogControlHost, IDisposable
     {
+        // Code disabled for FULLAPI
         internal readonly Collection<IShellItem> items;
 
         internal DialogShowState showState = DialogShowState.PreShow;
@@ -1194,6 +1197,14 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 pResponse = ShellNativeMethods.FileDialogEventShareViolationResponse.Accept;
 
             public void OnTypeChange(IFileDialog pfd) => parent.OnFileTypeChanged(EventArgs.Empty);
+        }
+#endif
+    }
+
+    internal class ContentPropertyAttribute : Attribute
+    {
+        public ContentPropertyAttribute(string v)
+        {
         }
     }
 }
