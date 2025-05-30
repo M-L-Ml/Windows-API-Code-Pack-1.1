@@ -18,12 +18,11 @@ using System.Windows.Interop;
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
     /// <summary>Defines the abstract base class for the common file dialogs.</summary>
-#if FULLAPI
+
     [ContentProperty("Controls")]
-#endif
     public abstract class CommonFileDialog : IDialogControlHost, IDisposable
     {
-#if FULLAPI
+#if !FULLAPI
         // Code disabled for FULLAPI
         internal readonly Collection<IShellItem> items;
 
@@ -627,7 +626,10 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         /// <summary>Displays the dialog.</summary>
         /// <param name="window">Top-level WPF window that will own the modal dialog box.</param>
         /// <returns>A <see cref="CommonFileDialogResult"/> object.</returns>
-        public CommonFileDialogResult ShowDialog(Window window)
+
+        //[Conditional("FULLAPI")]
+#if FULLAPI
+ public CommonFileDialogResult ShowDialog(Window window)
         {
             if (window == null)
             {
@@ -640,6 +642,7 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             // Show the modal dialog
             return ShowDialog();
         }
+#endif
 
         /// <summary>Displays the dialog.</summary>
         /// <returns>A <see cref="CommonFileDialogResult"/> object.</returns>
@@ -861,11 +864,16 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
             if (parentWindow == IntPtr.Zero)
             {
+#if FULLAPI
+
                 if (System.Windows.Application.Current != null && System.Windows.Application.Current.MainWindow != null)
                 {
                     parentWindow = (new WindowInteropHelper(System.Windows.Application.Current.MainWindow)).Handle;
                 }
-                else if (System.Windows.Forms.Application.OpenForms.Count > 0)
+                else
+#endif
+                Debug.Assert(false, " not implemented");
+                if (System.Windows.Forms.Application.OpenForms.Count > 0)
                 {
                     parentWindow = System.Windows.Forms.Application.OpenForms[0].Handle;
                 }
@@ -1207,6 +1215,22 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         public bool IsControlPropertyChangeAllowed(string propertyName, DialogControl control) => false;
         public void Dispose() { }
 #endif
+    }
+
+    [Serializable]
+    internal class CommonControlException : Exception
+    {
+        public CommonControlException()
+        {
+        }
+
+        public CommonControlException(string message) : base(message)
+        {
+        }
+
+        public CommonControlException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
 #if !FULLAPI
