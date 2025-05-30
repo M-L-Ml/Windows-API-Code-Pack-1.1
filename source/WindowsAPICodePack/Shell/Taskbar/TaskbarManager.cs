@@ -1,11 +1,13 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Microsoft.WindowsAPICodePack.Shell.Resources;
 using MS.WindowsAPICodePack.Internal;
 using System;
 using System.Diagnostics;
+#if FULLAPI
 using System.Windows.Interop;
-
+#endif
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
     /// <summary>
@@ -62,8 +64,8 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 windowHandle,
                 icon != null ? icon.Handle : IntPtr.Zero,
                 accessibilityText);
-
-        /// <summary>
+#if FULLAPI
+  /// <summary>
         /// Applies an overlay to a taskbar button of the given WPF window to indicate application status or a notification to the user.
         /// </summary>
         /// <param name="window">The window whose associated taskbar button receives the overlay. This window belong to a calling process associated with the button's application and must be already loaded.</param>
@@ -72,8 +74,8 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         public void SetOverlayIcon(System.Windows.Window window, System.Drawing.Icon icon, string accessibilityText) => TaskbarList.Instance.SetOverlayIcon(
                 (new WindowInteropHelper(window)).Handle,
                 icon != null ? icon.Handle : IntPtr.Zero,
-                accessibilityText);
-
+                    accessibilityText);
+#endif  
         /// <summary>
         /// Displays or updates a progress bar hosted in a taskbar button of the main application window 
         /// to show the specific percentage completed of the full operation.
@@ -97,7 +99,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 windowHandle,
                 Convert.ToUInt32(currentValue),
                 Convert.ToUInt32(maximumValue));
-
+#if FULLAPI
         /// <summary>
         /// Displays or updates a progress bar hosted in a taskbar button of the given WPF window 
         /// to show the specific percentage completed of the full operation.
@@ -110,6 +112,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 (new WindowInteropHelper(window)).Handle,
                 Convert.ToUInt32(currentValue),
                 Convert.ToUInt32(maximumValue));
+#endif
 
         /// <summary>
         /// Sets the type and state of the progress indicator displayed on a taskbar button of the main application window.
@@ -125,7 +128,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// This window belong to a calling process associated with the button's application and must be already loaded.</param>
         /// <param name="state">Progress state of the progress button</param>
         public void SetProgressState(TaskbarProgressBarState state, IntPtr windowHandle) => TaskbarList.Instance.SetProgressState(windowHandle, (TaskbarProgressBarStatus)state);
-
+#if FULLAPI
         /// <summary>
         /// Sets the type and state of the progress indicator displayed on a taskbar button 
         /// of the given WPF window
@@ -171,7 +174,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 return _thumbnailToolBarManager;
             }
         }
-
+#endif
         /// <summary>
         /// Gets or sets the application user model id. Use this to explicitly
         /// set the application id when generating custom jump lists
@@ -227,6 +230,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         public void SetApplicationIdForSpecificWindow(IntPtr windowHandle, string appId) =>
             // Left as instance method, to follow singleton pattern.
             TaskbarNativeMethods.SetWindowAppId(windowHandle, appId);
+#if FULLAPI
 
         /// <summary>
         /// Sets the application user model id for a given window
@@ -239,7 +243,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         public void SetApplicationIdForSpecificWindow(System.Windows.Window window, string appId) =>
             // Left as instance method, to follow singleton pattern.
             TaskbarNativeMethods.SetWindowAppId((new WindowInteropHelper(window)).Handle, appId);
-
+#endif
         /// <summary>
         /// Sets the current process' explicit application user model id.
         /// </summary>
