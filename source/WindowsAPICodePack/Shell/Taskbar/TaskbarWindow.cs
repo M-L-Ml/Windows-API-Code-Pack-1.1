@@ -1,11 +1,14 @@
-﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Shell.Resources;
 using System;
+#if FULLAPI
 using System.Windows;
+#endif
 
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
+#if FULLAPI
     internal class TaskbarWindow : IDisposable
     {
         internal TabbedThumbnailProxyWindow TabbedThumbnailProxyWindow { get; set; }
@@ -18,7 +21,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         internal IntPtr UserWindowHandle { get; set; }
 
+#if FULLAPI
         internal UIElement WindowsControl { get; set; }
+#else
+        // Stub for UIElement for non-FULLAPI builds
+        internal object WindowsControl { get; set; }
+#endif
 
         private TabbedThumbnail _tabbedThumbnailPreview;
         internal TabbedThumbnail TabbedThumbnail
@@ -119,7 +127,11 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             WindowsControl = null;
         }
 
+#if FULLAPI
         internal TaskbarWindow(System.Windows.UIElement windowsControl, params ThumbnailToolBarButton[] buttons)
+#else
+        internal TaskbarWindow(object windowsControl, params ThumbnailToolBarButton[] buttons)
+#endif
         {
             if (windowsControl == null)
             {
@@ -215,4 +227,11 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         #endregion
     }
+#else
+    // Stubs for missing types and disabling code for non-FULLAPI builds
+    internal class TaskbarWindow : IDisposable
+    {
+        public void Dispose() { }
+    }
+#endif
 }
