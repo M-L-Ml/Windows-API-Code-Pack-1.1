@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using System;
 using System.Windows;
@@ -51,5 +51,9 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// Gets the ThumbnailToolBarButton that was clicked
         /// </summary>
         public ThumbnailToolBarButton ThumbnailButton { get; private set; }
+    }
+
+    public class UIElement
+    {
     }
 }

@@ -8,9 +8,9 @@ using System.Windows;
 
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
-#if FULLAPI
     internal class TaskbarWindow : IDisposable
     {
+#if FULLAPI
         internal TabbedThumbnailProxyWindow TabbedThumbnailProxyWindow { get; set; }
 
         internal ThumbnailToolbarProxyWindow ThumbnailToolbarProxyWindow { get; set; }
@@ -21,13 +21,15 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         internal IntPtr UserWindowHandle { get; set; }
 
-#if FULLAPI
-        internal UIElement WindowsControl { get; set; }
-#else
-        // Stub for UIElement for non-FULLAPI builds
-        internal object WindowsControl { get; set; }
 #endif
+        internal UIElement WindowsControl { get; set; }
+#if FULLAPI
+#else
+#endif
+//// Stub for UIElement for non-FULLAPI builds
+//internal object WindowsControl { get; set; }
 
+#if FULLAPI
         private TabbedThumbnail _tabbedThumbnailPreview;
         internal TabbedThumbnail TabbedThumbnail
         {
@@ -176,6 +178,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             WindowsControl = preview.WindowsControl;
             TabbedThumbnail = preview;
         }
+#endif
 
         #region IDisposable Members
 
@@ -200,6 +203,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         {
             if (disposing)
             {
+#if FULLAPI
                 // Dispose managed resources
                 if (_tabbedThumbnailPreview != null)
                 {
@@ -222,16 +226,17 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 // Don't dispose the thumbnail buttons as they might be used in another window.
                 // Setting them to null will indicate we don't need use anymore.
                 _thumbnailButtons = null;
+#endif
             }
         }
 
         #endregion
     }
-#else
     // Stubs for missing types and disabling code for non-FULLAPI builds
-    internal class TaskbarWindow : IDisposable
-    {
-        public void Dispose() { }
-    }
-#endif
+    //internal class TaskbarWindow : IDisposable
+    //{
+    //    public nint UserWindowHandle { get; internal set; }
+
+    //    public void Dispose() { }
+    //}
 }
