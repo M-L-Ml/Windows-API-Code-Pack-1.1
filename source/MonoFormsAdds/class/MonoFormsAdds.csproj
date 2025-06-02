@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha7" />
+    <PackageReference Include="Core.System.Windows.Forms"/>
 	<!-- <PackageReference Include="System" /> -->
     <!-- <PackageReference Include="System.Windows.Browser" /> -->
     <!-- <PackageReference Include="System.Xml" /> -->
