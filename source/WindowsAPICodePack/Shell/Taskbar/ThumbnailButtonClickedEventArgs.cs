@@ -52,8 +52,4 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// </summary>
         public ThumbnailToolBarButton ThumbnailButton { get; private set; }
     }
-
-    public class UIElement
-    {
-    }
 }

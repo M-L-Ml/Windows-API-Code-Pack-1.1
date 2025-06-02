@@ -1,4 +1,4 @@
-﻿
+
 using System.Diagnostics;
 using System.Windows.Forms;
 //used in GitUI.CommandsDialogs.BrowseDialog.DashboardControl
@@ -31,5 +31,11 @@ namespace System.Windows.Forms
 
         }
         public static void TaskLink(this ListViewGroup t, string _) { Debug.Assert(false,"TODO implement"); }
+    }
+}
+namespace System.Windows
+{
+    public class UIElement
+    {
     }
 }

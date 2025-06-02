@@ -2,8 +2,8 @@
 
 using Microsoft.WindowsAPICodePack.Shell.Resources;
 using System;
-#if FULLAPI
 using System.Windows;
+#if FULLAPI
 #endif
 
 namespace Microsoft.WindowsAPICodePack.Taskbar
