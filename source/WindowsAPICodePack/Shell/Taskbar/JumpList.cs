@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Shell;
 using Microsoft.WindowsAPICodePack.Shell.Resources;
@@ -33,7 +33,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <param name="windowHandle">Handle of the window associated with the new JumpList</param>
         /// <returns>A new JumpList that is associated with the specific window handle</returns>
         public static JumpList CreateJumpListForIndividualWindow(string appId, IntPtr windowHandle) => new JumpList(appId, windowHandle);
-
+#if FULLAPI
         /// <summary>
         /// Create a JumpList for the application's taskbar button.
         /// </summary>
@@ -42,6 +42,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <returns>A new JumpList that is associated with the specific WPF window</returns>
         public static JumpList CreateJumpListForIndividualWindow(string appId, System.Windows.Window window) => new JumpList(appId, window);
 
+#endif
         // Best practice recommends defining a private object to lock on
         private readonly object syncLock = new object();
 
@@ -192,6 +193,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             : this(appID, TaskbarManager.Instance.OwnerHandle)
         {
         }
+#if FULLAPI
 
         /// <summary>
         /// Creates a new instance of the JumpList class with the specified
@@ -203,7 +205,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             : this(appID, (new System.Windows.Interop.WindowInteropHelper(window)).Handle)
         {
         }
-
+#endif
         /// <summary>
         /// Creates a new instance of the JumpList class with the specified
         /// appId. The JumpList is associated with the given window.
