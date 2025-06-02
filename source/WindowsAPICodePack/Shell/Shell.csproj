@@ -31,10 +31,10 @@
     <AssemblyOriginatorKeyFile>ProjectSignKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\..\README.md" Pack="true" PackagePath=""/>
+    <None Include="..\..\..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\LICENSE" Pack="true" PackagePath=""/>
+    <None Include="..\..\..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -64,6 +64,7 @@
     <PackageReference Include="Core.System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MonoFormsAdds\class\MonoFormsAdds.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
   <ItemGroup>
