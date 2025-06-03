@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Shell;
 using Microsoft.WindowsAPICodePack.Shell.Resources;
@@ -124,6 +124,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <param name="windowsControl">WPF Control (UIElement) for which a tabbed thumbnail needs to be displayed</param>
         /// <param name="peekOffset">Offset point used for displaying the peek bitmap. This setting is
         /// recomended for hidden WPF controls as it is difficult to calculate their offset.</param>
+#if FULLAPI
         public TabbedThumbnail(Window parentWindow, UIElement windowsControl, Vector peekOffset)
         {
             if (windowsControl == null)
@@ -142,6 +143,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             ParentWindowHandle = (new WindowInteropHelper(parentWindow)).Handle;
             PeekOffset = peekOffset;
         }
+#endif
 
         #endregion
 
@@ -188,13 +190,17 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <param name="icon">System.Drawing.Icon for the window/control associated with this preview</param>
         public void SetWindowIcon(Icon icon)
         {
+#if FULLAPI
             Icon = icon;
 
             // If we have a TaskbarWindow assigned, set its icon
-            if (TaskbarWindow != null && TaskbarWindow.TabbedThumbnailProxyWindow != null)
+            if (TaskbarWindow != null && ((TaskbarWindow)TaskbarWindow).TabbedThumbnailProxyWindow != null)
             {
-                TaskbarWindow.TabbedThumbnailProxyWindow.Icon = Icon;
+                ((TaskbarWindow)TaskbarWindow).TabbedThumbnailProxyWindow.Icon = Icon;
             }
+#else
+            throw new NotImplementedException("SetWindowIcon is not fully implemented when FULLAPI is not defined. TaskbarWindow functionality is limited.");
+#endif
         }
 
         /// <summary>
@@ -204,12 +210,16 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <remarks>This method will not release the icon handle. It is the caller's responsibility to release the icon handle.</remarks>
         public void SetWindowIcon(IntPtr iconHandle)
         {
+#if FULLAPI
             Icon = iconHandle != IntPtr.Zero ? System.Drawing.Icon.FromHandle(iconHandle) : null;
 
-            if (TaskbarWindow != null && TaskbarWindow.TabbedThumbnailProxyWindow != null)
+            if (TaskbarWindow != null && ((TaskbarWindow)TaskbarWindow).TabbedThumbnailProxyWindow != null)
             {
-                TaskbarWindow.TabbedThumbnailProxyWindow.Icon = Icon;
+                ((TaskbarWindow)TaskbarWindow).TabbedThumbnailProxyWindow.Icon = Icon;
             }
+#else
+            throw new NotImplementedException("SetWindowIcon is not fully implemented when FULLAPI is not defined. TaskbarWindow functionality is limited.");
+#endif
         }
 
         private Rectangle? _clippingRectangle;
@@ -226,7 +236,11 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 _clippingRectangle = value;
 
                 // The user has updated the clipping region, so invalidate our existing preview
+#if FULLAPI
                 TaskbarWindowManager.InvalidatePreview(TaskbarWindow);
+#else
+                throw new NotImplementedException("TaskbarWindowManager.InvalidatePreview is not available when FULLAPI is not defined.");
+#endif
             }
         }
 
@@ -267,11 +281,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// needs to be shown a new thumbnail on the taskbar preview (or aero peek).
         /// </summary>
         /// <param name="bitmapSource">The image to use.</param>
-        /// <remarks>
-        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
-        /// render certain areas as appropriate - it is the user's responsibility
-        /// to render a bitmap with the proper dimensions.
-        /// </remarks>
+/// <remarks>
+/// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
+/// render certain areas as appropriate - it is the user's responsibility
+/// to render a bitmap with the proper dimensions.
+/// </remarks>
+#if FULLAPI
         public void SetImage(BitmapSource bitmapSource)
         {
             if (bitmapSource == null)
@@ -294,7 +309,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 }
             }
         }
-
+#else
+        public void SetImage(object bitmapSource)
+        {
+            throw new NotImplementedException("SetImage with BitmapSource is not available when FULLAPI is not defined. WPF dependencies are missing.");
+        }
+#endif
         /// <summary>
         /// Override the thumbnail and peek bitmap. 
         /// By providing this bitmap manually, Thumbnail Window manager will provide the 
@@ -321,7 +341,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             CurrentHBitmap = hBitmap;
 
             // Let DWM know to invalidate its cached thumbnail/preview and ask us for a new one            
+#if FULLAPI
             TaskbarWindowManager.InvalidatePreview(TaskbarWindow);
+#else
+            // When FULLAPI is not defined, we can't invalidate the preview
+            // This is a stub implementation that doesn't throw an exception since it's an internal method
+#endif
         }
 
         /// <summary>
@@ -346,7 +371,15 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// Gets or sets the offset used for displaying the peek bitmap. This setting is
         /// recomended for hidden WPF controls as it is difficult to calculate their offset.
         /// </summary>
+#if FULLAPI
         public Vector? PeekOffset { get; set; }
+#else
+        public object PeekOffset
+        {
+            get { throw new NotImplementedException("PeekOffset is not available when FULLAPI is not defined. WPF Vector type is missing."); }
+            set { throw new NotImplementedException("PeekOffset is not available when FULLAPI is not defined. WPF Vector type is missing."); }
+        }
+#endif
 
         #endregion
 
@@ -469,10 +502,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 {
                     eventArgs = new TabbedThumbnailBitmapRequestedEventArgs(WindowHandle);
                 }
+#if FULLAPI
                 else if (WindowsControl != null)
                 {
-                    eventArgs = new TabbedThumbnailBitmapRequestedEventArgs(WindowsControl);
+                    eventArgs = new TabbedThumbnailBitmapRequestedEventArgs((UIElement)WindowsControl);
                 }
+#endif
 
                 TabbedThumbnailBitmapRequested(this, eventArgs);
             }
@@ -486,10 +521,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 eventArgs = new TabbedThumbnailClosedEventArgs(WindowHandle);
             }
+#if FULLAPI
             else if (WindowsControl != null)
             {
-                eventArgs = new TabbedThumbnailClosedEventArgs(WindowsControl);
+                eventArgs = new TabbedThumbnailClosedEventArgs((UIElement)WindowsControl);
             }
+#endif
 
             return eventArgs;
         }
@@ -502,10 +539,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 eventArgs = new TabbedThumbnailEventArgs(WindowHandle);
             }
+#if FULLAPI
             else if (WindowsControl != null)
             {
-                eventArgs = new TabbedThumbnailEventArgs(WindowsControl);
+                eventArgs = new TabbedThumbnailEventArgs((UIElement)WindowsControl);
             }
+#endif
 
             return eventArgs;
         }
