@@ -157,6 +157,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             }
         }
 
+#endif
         private ThumbnailToolBarManager _thumbnailToolBarManager;
         /// <summary>
         /// Gets the Thumbnail toolbar manager class for adding/updating
@@ -174,7 +175,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 return _thumbnailToolBarManager;
             }
         }
-#endif
         /// <summary>
         /// Gets or sets the application user model id. Use this to explicitly
         /// set the application id when generating custom jump lists

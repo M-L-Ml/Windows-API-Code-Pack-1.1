@@ -1,4 +1,5 @@
-#if !FULLAPI
+#if N0
+//!FULLAPI
 using System;
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
