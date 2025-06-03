@@ -38,6 +38,9 @@ namespace System.Windows.Forms
 
 namespace System.Windows
 {
+    /// <summary>
+    /// it's a Stub for the WPF's class
+    /// </summary>
     public class UIElement
     {
     }
