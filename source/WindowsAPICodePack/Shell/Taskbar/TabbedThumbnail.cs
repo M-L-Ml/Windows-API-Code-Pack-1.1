@@ -9,8 +9,10 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
+#if WINDOWS_OWN 
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+#endif
 
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
@@ -27,8 +29,9 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         // WPF properties
         internal UIElement WindowsControl { get; set; }
-        internal Window WindowsControlParentWindow { get; set; }
-
+#if FULLAPI
+      internal Window WindowsControlParentWindow { get; set; }
+#endif
         private TaskbarWindow _taskbarWindow;
         internal TaskbarWindow TaskbarWindow
         {
@@ -36,12 +39,14 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             set
             {
                 _taskbarWindow = value;
+#if FULLAPI
 
                 // If we have a TaskbarWindow assigned, set it's icon
                 if (_taskbarWindow != null && _taskbarWindow.TabbedThumbnailProxyWindow != null)
                 {
                     _taskbarWindow.TabbedThumbnailProxyWindow.Icon = Icon;
                 }
+#endif
             }
         }
 
@@ -63,7 +68,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         internal bool RemovedFromTaskbar { get; set; }
 
-        #endregion
+#endregion
 
         #region Constructors
 
@@ -281,11 +286,11 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// needs to be shown a new thumbnail on the taskbar preview (or aero peek).
         /// </summary>
         /// <param name="bitmapSource">The image to use.</param>
-/// <remarks>
-/// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
-/// render certain areas as appropriate - it is the user's responsibility
-/// to render a bitmap with the proper dimensions.
-/// </remarks>
+        /// <remarks>
+        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
+        /// render certain areas as appropriate - it is the user's responsibility
+        /// to render a bitmap with the proper dimensions.
+        /// </remarks>
 #if FULLAPI
         public void SetImage(BitmapSource bitmapSource)
         {
@@ -397,6 +402,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// </summary>
         public event EventHandler TooltipChanged;
 
+#if FULLAPI
         /// <summary>
         /// The event that occurs when a tab is closed on the taskbar thumbnail preview.
         /// </summary>
@@ -477,10 +483,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             TaskbarManager.Instance.TabbedThumbnail.RemoveThumbnailPreview(this);
             return true;
         }
+#endif
 
         internal void OnTabbedThumbnailActivated()
         {
-            if (TabbedThumbnailActivated != null)
+#if FULLAPI
+           if (TabbedThumbnailActivated != null)
             {
                 TabbedThumbnailActivated(this, GetTabbedThumbnailEventArgs());
             }
@@ -490,10 +498,12 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 // Forward the message to the main window
                 CoreNativeMethods.SendMessage(ParentWindowHandle, WindowMessage.ActivateApplication, new IntPtr(1), new IntPtr(Thread.CurrentThread.GetHashCode()));
             }
+#endif
         }
 
         internal void OnTabbedThumbnailBitmapRequested()
         {
+#if FULLAPI
             if (TabbedThumbnailBitmapRequested != null)
             {
                 TabbedThumbnailBitmapRequestedEventArgs eventArgs = null;
@@ -502,16 +512,16 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
                 {
                     eventArgs = new TabbedThumbnailBitmapRequestedEventArgs(WindowHandle);
                 }
-#if FULLAPI
                 else if (WindowsControl != null)
                 {
                     eventArgs = new TabbedThumbnailBitmapRequestedEventArgs((UIElement)WindowsControl);
                 }
-#endif
 
                 TabbedThumbnailBitmapRequested(this, eventArgs);
             }
+#endif
         }
+#if FULLAPI
 
         private TabbedThumbnailClosedEventArgs GetTabbedThumbnailClosingEventArgs()
         {
@@ -521,15 +531,15 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 eventArgs = new TabbedThumbnailClosedEventArgs(WindowHandle);
             }
-#if FULLAPI
             else if (WindowsControl != null)
             {
                 eventArgs = new TabbedThumbnailClosedEventArgs((UIElement)WindowsControl);
             }
-#endif
 
             return eventArgs;
         }
+#endif
+#if FULLAPI
 
         private TabbedThumbnailEventArgs GetTabbedThumbnailEventArgs()
         {
@@ -539,15 +549,14 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 eventArgs = new TabbedThumbnailEventArgs(WindowHandle);
             }
-#if FULLAPI
             else if (WindowsControl != null)
             {
                 eventArgs = new TabbedThumbnailEventArgs((UIElement)WindowsControl);
             }
-#endif
 
             return eventArgs;
         }
+#endif
 
         #endregion
 

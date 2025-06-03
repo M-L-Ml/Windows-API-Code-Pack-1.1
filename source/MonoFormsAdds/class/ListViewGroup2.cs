@@ -33,9 +33,13 @@ namespace System.Windows.Forms
         public static void TaskLink(this ListViewGroup t, string _) { Debug.Assert(false,"TODO implement"); }
     }
 }
+
+#if !WINDOWS_OWN 
+
 namespace System.Windows
 {
     public class UIElement
     {
     }
 }
+#endif

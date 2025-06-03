@@ -10,7 +10,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 {
     internal class TaskbarWindow : IDisposable
     {
-#if FULLAPI
         internal TabbedThumbnailProxyWindow TabbedThumbnailProxyWindow { get; set; }
 
         internal ThumbnailToolbarProxyWindow ThumbnailToolbarProxyWindow { get; set; }
@@ -21,7 +20,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         internal IntPtr UserWindowHandle { get; set; }
 
-#endif
         internal UIElement WindowsControl { get; set; }
 #if FULLAPI
 #else
@@ -29,7 +27,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 //// Stub for UIElement for non-FULLAPI builds
 //internal object WindowsControl { get; set; }
 
-#if FULLAPI
         private TabbedThumbnail _tabbedThumbnailPreview;
         internal TabbedThumbnail TabbedThumbnail
         {
@@ -60,13 +57,16 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         private void UpdateHandles()
         {
+#if FULLAPI
             foreach (var button in _thumbnailButtons)
             {
                 button.WindowHandle = WindowToTellTaskbarAbout;
                 button.AddedToTaskbar = false;
             }
+#endif
         }
 
+#if FULLAPI
 
         // TODO: Verify the logic of this property. There are situations where this will throw InvalidOperationException when it shouldn't.
         internal IntPtr WindowToTellTaskbarAbout
@@ -100,7 +100,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             }
             TabbedThumbnailProxyWindow.Text = title;
         }
-
+#endif
         internal TaskbarWindow(IntPtr userWindowHandle, params ThumbnailToolBarButton[] buttons)
         {
             if (userWindowHandle == IntPtr.Zero)
@@ -129,12 +129,9 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             WindowsControl = null;
         }
 
-#if FULLAPI
         internal TaskbarWindow(System.Windows.UIElement windowsControl, params ThumbnailToolBarButton[] buttons)
-#else
-        internal TaskbarWindow(object windowsControl, params ThumbnailToolBarButton[] buttons)
-#endif
         {
+//#if FULLAPI
             if (windowsControl == null)
             {
                 throw new ArgumentNullException("windowsControl");
@@ -178,7 +175,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             WindowsControl = preview.WindowsControl;
             TabbedThumbnail = preview;
         }
-#endif
 
         #region IDisposable Members
 
