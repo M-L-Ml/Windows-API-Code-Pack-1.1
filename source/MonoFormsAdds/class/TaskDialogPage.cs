@@ -10,6 +10,8 @@ namespace System.Windows.Forms
     /// <summary>
     /// it's a stub
     /// </summary>
+#if !FULLAPI
+    // Stub implementation
     public class TaskDialogPage
     {
         public string Text { get; set; }
@@ -19,5 +21,6 @@ namespace System.Windows.Forms
         public object Verification { get; set; }
         public bool SizeToContent { get; set; }
     }
+#endif
 }
 #endif

@@ -1,4 +1,4 @@
-//Copyright (c) Microsoft Corporation.  All rights reserved.
+﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Shell;
 using Microsoft.WindowsAPICodePack.Shell.Resources;
@@ -9,7 +9,7 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
-#if WINDOWS_OWN 
+#if WINDOWS_OWN
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 #endif
@@ -76,9 +76,9 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// Creates a new TabbedThumbnail with the given window handle of the parent and
         /// a child control/window's handle (e.g. TabPage or Panel)
         /// </summary>
-        /// <param name="parentWindowHandle">Window handle of the parent window. 
+        /// <param name="parentWindowHandle">Window handle of the parent window.
         /// This window has to be a top-level window and the handle cannot be null or IntPtr.Zero</param>
-        /// <param name="windowHandle">Window handle of the child control or window for which a tabbed 
+        /// <param name="windowHandle">Window handle of the child control or window for which a tabbed
         /// thumbnail needs to be displayed</param>
         public TabbedThumbnail(IntPtr parentWindowHandle, IntPtr windowHandle)
         {
@@ -99,7 +99,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// Creates a new TabbedThumbnail with the given window handle of the parent and
         /// a child control (e.g. TabPage or Panel)
         /// </summary>
-        /// <param name="parentWindowHandle">Window handle of the parent window. 
+        /// <param name="parentWindowHandle">Window handle of the parent window.
         /// This window has to be a top-level window and the handle cannot be null or IntPtr.Zero</param>
         /// <param name="control">Child control for which a tabbed thumbnail needs to be displayed</param>
         /// <remarks>This method can also be called when using a WindowsFormHost control in a WPF application.
@@ -124,7 +124,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// a WPF child Window. For WindowsFormHost control, use TabbedThumbnail(IntPtr, Control) overload and pass
         /// the WindowsFormHost.Child as the second parameter.
         /// </summary>
-        /// <param name="parentWindow">Parent window for the UIElement control. 
+        /// <param name="parentWindow">Parent window for the UIElement control.
         /// This window has to be a top-level window and the handle cannot be null</param>
         /// <param name="windowsControl">WPF Control (UIElement) for which a tabbed thumbnail needs to be displayed</param>
         /// <param name="peekOffset">Offset point used for displaying the peek bitmap. This setting is
@@ -173,7 +173,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         private string _tooltip = string.Empty;
         /// <summary>
-        /// Tooltip to be shown for this thumbnail on the taskbar. 
+        /// Tooltip to be shown for this thumbnail on the taskbar.
         /// By default this is full title of the window shown on the taskbar.
         /// </summary>
         public string Tooltip
@@ -254,15 +254,15 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         internal Icon Icon { get; private set; }
 
         /// <summary>
-        /// Override the thumbnail and peek bitmap. 
-        /// By providing this bitmap manually, Thumbnail Window manager will provide the 
+        /// Override the thumbnail and peek bitmap.
+        /// By providing this bitmap manually, Thumbnail Window manager will provide the
         /// Desktop Window Manager (DWM) this bitmap instead of rendering one automatically.
         /// Use this property to update the bitmap whenever the control is updated and the user
         /// needs to be shown a new thumbnail on the taskbar preview (or aero peek).
         /// </summary>
         /// <param name="bitmap">The image to use.</param>
         /// <remarks>
-        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
+        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not
         /// render certain areas as appropriate - it is the user's responsibility
         /// to render a bitmap with the proper dimensions.
         /// </remarks>
@@ -270,7 +270,11 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         {
             if (bitmap != null)
             {
+#if FULLAPI
                 SetImage(bitmap.GetHbitmap());
+#else
+                throw new NotImplementedException("SetImage is not implemented for non-FULLAPI builds.");
+#endif
             }
             else
             {
@@ -279,15 +283,15 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         }
 
         /// <summary>
-        /// Override the thumbnail and peek bitmap. 
-        /// By providing this bitmap manually, Thumbnail Window manager will provide the 
+        /// Override the thumbnail and peek bitmap.
+        /// By providing this bitmap manually, Thumbnail Window manager will provide the
         /// Desktop Window Manager (DWM) this bitmap instead of rendering one automatically.
         /// Use this property to update the bitmap whenever the control is updated and the user
         /// needs to be shown a new thumbnail on the taskbar preview (or aero peek).
         /// </summary>
         /// <param name="bitmapSource">The image to use.</param>
         /// <remarks>
-        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
+        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not
         /// render certain areas as appropriate - it is the user's responsibility
         /// to render a bitmap with the proper dimensions.
         /// </remarks>
@@ -321,8 +325,8 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         }
 #endif
         /// <summary>
-        /// Override the thumbnail and peek bitmap. 
-        /// By providing this bitmap manually, Thumbnail Window manager will provide the 
+        /// Override the thumbnail and peek bitmap.
+        /// By providing this bitmap manually, Thumbnail Window manager will provide the
         /// Desktop Window Manager (DWM) this bitmap instead of rendering one automatically.
         /// Use this property to update the bitmap whenever the control is updated and the user
         /// needs to be shown a new thumbnail on the taskbar preview (or aero peek).
@@ -330,7 +334,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// <param name="hBitmap">A bitmap handle for the image to use.
         /// <para>When the TabbedThumbnail is finalized, this class will delete the provided hBitmap.</para></param>
         /// <remarks>
-        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not 
+        /// If the bitmap doesn't have the right dimensions, the DWM may scale it or not
         /// render certain areas as appropriate - it is the user's responsibility
         /// to render a bitmap with the proper dimensions.
         /// </remarks>
@@ -345,7 +349,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             // Set the new bitmap
             CurrentHBitmap = hBitmap;
 
-            // Let DWM know to invalidate its cached thumbnail/preview and ask us for a new one            
+            // Let DWM know to invalidate its cached thumbnail/preview and ask us for a new one
 #if FULLAPI
             TaskbarWindowManager.InvalidatePreview(TaskbarWindow);
 #else
@@ -563,7 +567,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         #region IDisposable Members
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         ~TabbedThumbnail()
         {
@@ -589,12 +593,20 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 _taskbarWindow = null;
 
+#if FULLAPI
                 if (Icon != null) { Icon.Dispose(); }
+#else
+                throw new NotImplementedException("Icon.Dispose is not implemented for non-FULLAPI builds.");
+#endif
+#if FULLAPI
                 Icon = null;
 
                 _title = null;
+
                 _tooltip = null;
+
                 WindowsControl = null;
+#endif
             }
 
             if (CurrentHBitmap != IntPtr.Zero)
