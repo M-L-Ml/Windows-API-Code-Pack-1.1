@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.WindowsAPICodePack.Shell</AssemblyName>
     <PackageId>Microsoft-WindowsAPICodePack-Shell-6.0</PackageId>
