@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 namespace Microsoft.WindowsAPICodePack.Taskbar
 {
@@ -31,7 +31,21 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         /// </summary>
         Frequent,
     }
+//#if !FULLAPI
 
+//    namespace Microsoft.WindowsAPICodePack.Taskbar
+//    {
+//        // Stub for TaskbarProgressBarState for cross-platform build
+//        public enum TaskbarProgressBarState
+//        {
+//            NoProgress,
+//            Indeterminate,
+//            Normal,
+//            Error,
+//            Paused
+//        }
+//    }
+//#endif
     /// <summary>
     /// Represents the thumbnail progress bar state.
     /// </summary>
