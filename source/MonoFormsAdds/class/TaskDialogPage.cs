@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 #if !WINDOWS_OWN
 namespace System.Windows.Forms
 {
+    /// <summary>
+    /// it's a stub
+    /// </summary>
     public class TaskDialogPage
     {
         public string Text { get; set; }
