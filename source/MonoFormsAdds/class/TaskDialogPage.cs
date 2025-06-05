@@ -26,16 +26,17 @@ namespace System.Windows.Forms
         public object Icon { get; set; }
         public TaskDialogVerificationCheckBox Verification { get; set; }
         public bool SizeToContent { get; set; }
+
         /// <summary>
         /// TaskDialogButton
         /// </summary>
-
-        public Collection<TaskDialogButtonBB> Buttons { get; set; }
+        public Collection<TaskDialogButtonBB> Buttons { get; set; } = new();
         public bool AllowCancel { get; set; }
         public TaskDialogButton DefaultButton { get; set; }
         public string Footnote { get; set; }
     }
-    public class TaskDialog
+       // see also Microsoft.WindowsAPICodePack.Dialogs.TaskDialog
+    public static class TaskDialog
     {
         public static TaskDialogButtonBB ShowDialog(nint handle, TaskDialogPage page)
         {
@@ -71,6 +72,9 @@ namespace System.Windows.Forms
     //},
 
 
+    /// <summary>
+    /// stub
+    /// </summary>
     public class TaskDialogVerificationCheckBox //: TaskDialogButtonBB
     {
         public bool Checked { get; set; }
