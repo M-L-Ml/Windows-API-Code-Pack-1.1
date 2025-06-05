@@ -35,22 +35,35 @@ namespace System.Windows.Forms
         public TaskDialogButton DefaultButton { get; set; }
         public string Footnote { get; set; }
     }
-       // see also Microsoft.WindowsAPICodePack.Dialogs.TaskDialog
+
+    /// <summary>
+    /// This is still stub not tested at all.
+    /// see also Microsoft.WindowsAPICodePack.Dialogs.TaskDialog
+    /// </summary>
     public static class TaskDialog
     {
         public static TaskDialogButtonBB ShowDialog(nint handle, TaskDialogPage page)
         {
-            throw new NotImplementedException();
+
+            return ShowDialog(page);
         }
 
         public static TaskDialogButtonBB ShowDialog(IWin32Window owner, TaskDialogPage page)
         {
-            throw new NotImplementedException();
+            return ShowDialog(page);
         }
 
         public static TaskDialogButtonBB ShowDialog(TaskDialogPage page)
         {
-            throw new NotImplementedException();
+            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog d = new();
+            foreach (var b in page.Buttons)
+            {
+                d.Controls.Add(b);
+            }
+            var result = d.Show();
+            //TODO:  find button with result;
+            return (TaskDialogButtonBB)d.Controls.FirstOrDefault();
+            //throw new NotImplementedException();
         }
     }
 
@@ -80,13 +93,13 @@ namespace System.Windows.Forms
         public bool Checked { get; set; }
         public string Text { get; set; }
     }
-    public class TaskDialogButton: TaskDialogButtonBB
+    public class TaskDialogButton : TaskDialogButtonBB
     {
-       // private string _text;
+        // private string _text;
 
-        public TaskDialogButton(string name):base(name, name)
+        public TaskDialogButton(string name) : base(name, name)
         {
-           // _text = text;
+            // _text = text;
         }
 
         public static readonly TaskDialogButton Cancel = new TaskDialogButton("Cancel");
@@ -94,7 +107,7 @@ namespace System.Windows.Forms
         public static readonly TaskDialogButton No = new TaskDialogButton("No");
         public static readonly TaskDialogButton OK = new TaskDialogButton("OK");
     }
-    public sealed class TaskDialogCommandLinkButton :Microsoft.WindowsAPICodePack.Dialogs.TaskDialogCommandLink
+    public sealed class TaskDialogCommandLinkButton : Microsoft.WindowsAPICodePack.Dialogs.TaskDialogCommandLink
     {
         public TaskDialogCommandLinkButton(string name, bool enabled = true) : base(name, "")
         {
