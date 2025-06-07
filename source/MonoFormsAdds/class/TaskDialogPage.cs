@@ -8,11 +8,19 @@ using System.Threading.Tasks;
 
 #if !WINDOWS_OWN
 
-/// as Base class
 
 namespace System.Windows.Forms
 {
+
+    /// as Base class
     using TaskDialogButtonBB = Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButton;
+    public static class TaskDialogButtonBBExtensions
+    {
+        public static void PerformClick(this TaskDialogButtonBB b)
+        {
+            throw new NotImplementedException("TODO implement");
+        }
+    }
     /// <summary>
     /// it's a stub
     /// </summary>
@@ -34,8 +42,19 @@ namespace System.Windows.Forms
         public bool AllowCancel { get; set; }
         public TaskDialogButton DefaultButton { get; set; }
         public string Footnote { get; set; }
+        public event EventHandler? Created;
     }
+    public sealed class LinkClicked2EventArgs : LinkClickedEventArgs
+    {
+        public LinkClicked2EventArgs(string linkText, int linkStart, int linkLength) : base(linkText)
+        {
+            LinkStart = linkStart;
+            LinkLength = linkLength;
+        }
 
+        public int LinkStart { get; }
+        public int LinkLength { get; }
+    }
     /// <summary>
     /// This is still stub not tested at all.
     /// see also Microsoft.WindowsAPICodePack.Dialogs.TaskDialog
@@ -62,7 +81,7 @@ namespace System.Windows.Forms
             }
             var result = d.Show();
             //TODO:  find button with result;
-            return (TaskDialogButtonBB)d.Controls.FirstOrDefault();
+            return (TaskDialogButtonBB)(d.Controls.FirstOrDefault(b => (b as TaskDialogButton)?.Text == result.ToString()) ?? d.Controls.FirstOrDefault());
             //throw new NotImplementedException();
         }
     }
