@@ -82,7 +82,6 @@ namespace System.Windows.Forms
             var result = d.Show();
             //TODO:  find button with result;
             return (TaskDialogButtonBB)(d.Controls.FirstOrDefault(b => (b as TaskDialogButton)?.Text == result.ToString()) ?? d.Controls.FirstOrDefault());
-            //throw new NotImplementedException();
         }
     }
 
