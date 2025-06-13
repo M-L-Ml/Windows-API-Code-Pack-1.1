@@ -3,6 +3,7 @@
 using Microsoft.WindowsAPICodePack.Resources;
 using System;
 using System.Globalization;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace MS.WindowsAPICodePack.Internal
@@ -72,6 +73,7 @@ namespace MS.WindowsAPICodePack.Internal
             }
         }
 
+        [SupportedOSPlatformGuard("unix")]
         private static bool IsRunningOnUnix => Environment.OSVersion.Platform == PlatformID.Unix;
 
         /// <summary>Throws PlatformNotSupportedException if the application is not running on Windows 7</summary>
