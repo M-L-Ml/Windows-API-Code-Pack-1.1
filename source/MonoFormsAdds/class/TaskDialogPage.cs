@@ -81,7 +81,7 @@ namespace System.Windows.Forms
                 d.Controls.Add(b);
             }
             Microsoft.WindowsAPICodePack.Dialogs.TaskDialogResult taskDialogResult;
-            if (Environment.OSVersion.Platform  == PlatformID.Win32NT)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 taskDialogResult = d.Show();
             }
@@ -89,7 +89,7 @@ namespace System.Windows.Forms
             {
                 Debug.Assert(false);
                 throw new NotImplementedException(" not implemented ");
-               // TODO: use derived from System.Windows.Forms.CommonDialog  Forms.Form  f = new();
+                // TODO: use derived from System.Windows.Forms.CommonDialog  Forms.Form  f = new();
                 // taskDialogResult = d.Show(owner: null);
             }
 
@@ -101,7 +101,7 @@ namespace System.Windows.Forms
         }
     }
 
-    public class TaskDialogIcon: //System.Drawing.Icon : IDisposable
+    public class TaskDialogIcon //System.Drawing.Icon : IDisposable
     {
         public static readonly TaskDialogIcon Warning = new();
 
@@ -138,19 +138,21 @@ namespace System.Windows.Forms
         public static readonly TaskDialogButton Yes = new TaskDialogButton("Yes");
         public static readonly TaskDialogButton No = new TaskDialogButton("No");
         public static readonly TaskDialogButton OK = new TaskDialogButton("OK");
+        public static readonly TaskDialogButton Close = new TaskDialogButton("Close");
+        public static readonly TaskDialogButton Help = new TaskDialogButton("Help");
     }
     public sealed class TaskDialogCommandLinkButton : Microsoft.WindowsAPICodePack.Dialogs.TaskDialogCommandLink
     {
-        public TaskDialogCommandLinkButton(string name, bool enabled = true)
-            : base(name, TaskDialogButton.MakeNonEmpty(name))
+        public TaskDialogCommandLinkButton(string? text, string? descriptionText = default, bool enabled = true, bool allowCloseDialog = true)
+            : base(TaskDialogButton.MakeNonEmpty(text), text: text)
         {
+            DescriptionText = descriptionText;
             Enabled = enabled;
         }
 
-        public TaskDialogCommandLinkButton(string name, string text) : base(name, text)
-        {
-            Enabled = true;
-        }
+
+
+        public string DescriptionText { get; set; }
     }
 }
 #endif
