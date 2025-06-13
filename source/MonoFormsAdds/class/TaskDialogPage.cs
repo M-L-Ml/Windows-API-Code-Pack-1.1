@@ -113,11 +113,9 @@ namespace System.Windows.Forms
     }
     public class TaskDialogButton : TaskDialogButtonBB
     {
-        // private string _text;
-
-        public TaskDialogButton(string name) : base(name, name)
+        static string MakeNonEmpty(string? t) => string.IsNullOrWhiteSpace(t) ? "<SomeDefaultText>" : t;
+        public TaskDialogButton(string name) : base(MakeNonEmpty(name), MakeNonEmpty(name))
         {
-            // _text = text;
         }
 
         public static readonly TaskDialogButton Cancel = new TaskDialogButton("Cancel");
@@ -130,6 +128,11 @@ namespace System.Windows.Forms
         public TaskDialogCommandLinkButton(string name, bool enabled = true) : base(name, "")
         {
             Enabled = enabled;
+        }
+
+        public TaskDialogCommandLinkButton(string name, string text) : base(name, text)
+        {
+            Enabled = true;
         }
     }
 }

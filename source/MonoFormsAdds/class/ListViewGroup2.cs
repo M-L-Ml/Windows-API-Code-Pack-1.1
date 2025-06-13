@@ -31,13 +31,14 @@ namespace System.Windows.Forms
         //public string Name { get; set; }
         public static void CollapsedState(this ListViewGroup t, ListViewGroupCollapsedState _)
         {
-            Debug.Assert(false, "TODO implement");
+            //t.CollapsedState = default;
+            //Debug.Assert(false, "TODO implement");
 
         }
         public static void TaskLink(this ListViewGroup t, string _)
         {
 
-            Debug.Assert(false, "TODO implement");
+            //Debug.Assert(false, "TODO implement");
         }
     }
 

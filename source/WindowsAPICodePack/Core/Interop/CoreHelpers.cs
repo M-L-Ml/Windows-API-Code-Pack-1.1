@@ -1,4 +1,4 @@
-﻿//Copyright (c) Microsoft Corporation.  All rights reserved.
+//Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Resources;
 using System;
@@ -11,7 +11,8 @@ namespace MS.WindowsAPICodePack.Internal
     public static class CoreHelpers
     {
         /// <summary>Determines if the application is running on Vista</summary>
-        public static bool RunningOnVista => Environment.OSVersion.Version.Major >= 6;
+        public static bool RunningOnVista => IsRunningOnUnix ||
+            Environment.OSVersion.Version.Major >= 6;
 
         /// <summary>Determines if the application is running on Windows 7</summary>
         public static bool RunningOnWin7 =>
@@ -56,14 +57,22 @@ namespace MS.WindowsAPICodePack.Internal
             return retval != 0 ? stringValue.ToString() : null;
         }
 
+
         /// <summary>Throws PlatformNotSupportedException if the application is not running on Windows Vista</summary>
         public static void ThrowIfNotVista()
         {
+            if (IsRunningOnUnix)
+            {
+                //TODO: check portability support and rename.
+                return;
+            }
             if (!CoreHelpers.RunningOnVista)
             {
                 throw new PlatformNotSupportedException(LocalizedMessages.CoreHelpersRunningOnVista);
             }
         }
+
+        private static bool IsRunningOnUnix => Environment.OSVersion.Platform == PlatformID.Unix;
 
         /// <summary>Throws PlatformNotSupportedException if the application is not running on Windows 7</summary>
         public static void ThrowIfNotWin7()
@@ -77,6 +86,11 @@ namespace MS.WindowsAPICodePack.Internal
         /// <summary>Throws PlatformNotSupportedException if the application is not running on Windows XP</summary>
         public static void ThrowIfNotXP()
         {
+            if (IsRunningOnUnix)
+            {
+                //TODO: check portability support and rename.
+                return;
+            }
             if (!CoreHelpers.RunningOnXP)
             {
                 throw new PlatformNotSupportedException(LocalizedMessages.CoreHelpersRunningOnXp);
