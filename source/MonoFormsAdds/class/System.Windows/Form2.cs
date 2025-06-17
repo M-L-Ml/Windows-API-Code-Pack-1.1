@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -34,6 +35,7 @@ namespace System.Windows.Forms
 
         }
     }
+
 
     public static class ControlExtensions2
     {
@@ -78,10 +80,18 @@ namespace System.Windows.Forms
             void InitForParent(Control parent);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public class AddTooltipsAndIconsToButtonsCommand : ITraverseCommand
         {
             public Image? Image { get; init; }
             public ToolTip? ToolTip { get; set; }
+
+            /// <summary>
+            /// on WSL Ubuntu labels display text correctly while buttons do not
+            /// </summary>
+            public static Label Label = new Label() { Text = "_" };
             //  public ToolTip? ToolTip { get; init; }
             public bool Execute(Control control)
             {
@@ -104,12 +114,22 @@ namespace System.Windows.Forms
                         }
                     };
                 }
-
-                if (Image != null)
+                if (button.Image == null)
                 {
-                    button.Image = Image;
-                    button.ImageAlign = ContentAlignment.MiddleLeft;
-                    changed = true;
+                    if (Image != null)
+                    {
+                        button.Image = Image;
+                        button.ImageAlign = ContentAlignment.MiddleLeft;
+                        changed = true;
+                    }
+                    else
+                    {
+                        Label.Text = button.Text;
+                        var im = Label.CaptureControlAsImage();
+                        button.Image = im;
+                        button.ImageAlign = ContentAlignment.MiddleLeft;
+                        changed = true;
+                    }
                 }
                 return changed;
             }
@@ -178,5 +198,51 @@ namespace System.Windows.Forms
             }
             return affectedControls;
         }
+
+        ///, bool shrink = false
+        public static Image CaptureControlAsImage(this Control control)
+        {
+            if (control == null)
+                throw new ArgumentNullException(nameof(control));
+
+            if (control.Width <= 0 || control.Height <= 0)
+                throw new ArgumentException("Control must have valid dimensions");
+
+            try
+            {
+                // Create bitmap with control's dimensions
+#pragma warning disable CA1416 // Validate platform compatibility
+                Bitmap bitmap = new Bitmap(control.Width, control.Height);
+#pragma warning restore CA1416 // Validate platform compatibility
+
+                // Capture the control's visual appearance
+                control.DrawToBitmap(bitmap, new Rectangle(0, 0, control.Width, control.Height));
+
+                return bitmap;
+            }
+            catch (ArgumentException ex)
+            {
+                // Handle cases where bitmap might be too large for the system
+                throw new InvalidOperationException($"Failed to capture control image: {ex.Message}", ex);
+            }
+        }
+        public static Bitmap ControlScreenShot(this Control form, bool clientAreaOnly)
+        {
+            var fullSizeBitmap = new Bitmap(width: form.Width, form.Height, format : PixelFormat.Format32bppArgb);
+            // .Net 4.7+
+            // fullSizeBitmap.SetResolution(form.DeviceDpi, form.DeviceDpi);
+
+            form.DrawToBitmap(fullSizeBitmap, new Rectangle(Point.Empty, form.Size));
+            if (!clientAreaOnly) return fullSizeBitmap;
+
+            Point p = form.PointToScreen(Point.Empty);
+            var clientRect =
+                new Rectangle(new Point(p.X - form.Bounds.X, p.Y - form.Bounds.Y), form.ClientSize);
+
+            var clientAreaBitmap = fullSizeBitmap.Clone(clientRect, PixelFormat.Format32bppArgb);
+            fullSizeBitmap.Dispose();
+            return clientAreaBitmap;
+        }
     }
+
 }
