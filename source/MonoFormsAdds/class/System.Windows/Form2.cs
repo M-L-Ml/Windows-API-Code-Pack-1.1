@@ -18,7 +18,16 @@ namespace System.Windows.Forms
         //   public IContainer ComponentsContainer => ;
         protected override void OnHandleCreated(EventArgs e)
         {
-            var toolTips = this.GetToolTipComponents().ToList();
+            List<ToolTip> toolTips;
+            var toolTip = (ToolTip?)GetService(typeof(ToolTip));
+            if (toolTip != null)
+            {
+                //seems almost never
+                toolTips = new List<ToolTip> { toolTip };
+            }
+            else
+                toolTips = this.GetToolTipComponents().ToList();
+
             this.AddTooltipsAndIconsToButtons(toolTip: toolTips.FirstOrDefault());
             base.OnHandleCreated(e);
 
@@ -34,7 +43,7 @@ namespace System.Windows.Forms
         //    var toolTipList = toolTips.ToList();
         //    if (toolTipList.Count > 0)
         //    {
-        //        ToolTip tt = ToolTipList[0];
+        //        ToolTip tt = toolTips[0];
         //        foreach (Control c in frm.Controls)
         //        {
         //            string text = tt.GetToolTip(c);
@@ -47,8 +56,9 @@ namespace System.Windows.Forms
         public static IEnumerable<ToolTip> GetToolTipComponents(this Control frm)
         {
             IContainer parent = GetComponentsContainer(frm);
-            var ToolTipList = parent.Components.OfType<ToolTip>();
-            return ToolTipList;
+
+            var toolTips = parent.Components.OfType<ToolTip>();
+            return toolTips;
         }
 
         public static IContainer? GetComponentsContainer(this Control frm)
@@ -62,6 +72,8 @@ namespace System.Windows.Forms
             {
                 return r;
             }
+
+
             Type typeForm = frm.GetType();
             FieldInfo fieldInfo = typeForm.GetField("components", BindingFlags.Instance | BindingFlags.NonPublic);
             IContainer? parent = (IContainer?)fieldInfo.GetValue(frm);
@@ -73,7 +85,7 @@ namespace System.Windows.Forms
             bool toolTCreated;
             if (toolTip == null)
             {
-                toolTip =  new ToolTip() { AutomaticDelay = 50, AutoPopDelay = 4000 };
+                toolTip = new ToolTip() { AutomaticDelay = 50, AutoPopDelay = 4000 };
                 toolTCreated = true;
             }
             else
@@ -90,22 +102,21 @@ namespace System.Windows.Forms
             {
                 if (control is ButtonBase button)
                 {
-                    if (!toolTCreated)
-                    {
-                        var existing = toolTip.GetToolTip(button);
-                        if (string.IsNullOrEmpty(existing))
-                        {
 
-                            toolTip.SetToolTip(button, $"{button.Text} .");
-                            button.TextChanged += (o, e) =>
+                    var existing = toolTCreated ? null : toolTip.GetToolTip(button);
+                    if (string.IsNullOrEmpty(existing))
+                    {
+
+                        toolTip.SetToolTip(button, $"{button.Text} .");
+                        button.TextChanged += (o, e) =>
+                        {
+                            if (o is ButtonBase b)
                             {
-                                if (o is ButtonBase b)
-                                {
-                                    toolTip.SetToolTip(b, $"{b.Text} .");
-                                }
-                            };
-                        }
+                                toolTip.SetToolTip(b, $"{b.Text} .");
+                            }
+                        };
                     }
+
                     if (image != null)
                     {
                         button.Image = image;
