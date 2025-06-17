@@ -65,7 +65,7 @@ namespace System.Windows.Forms
             Type typeForm = frm.GetType();
             // "components" is private field in Form , default name used by Form designer tools, it's private so we need to use reflection
             FieldInfo fieldInfo = typeForm.GetField("components", BindingFlags.Instance | BindingFlags.NonPublic);
-            IContainer? parent = (IContainer?)fieldInfo.GetValue(frm);
+            IContainer? parent = (IContainer?)fieldInfo?.GetValue(frm);
             return parent;
         }
 
@@ -95,7 +95,7 @@ namespace System.Windows.Forms
             //  public ToolTip? ToolTip { get; init; }
             public bool Execute(Control control)
             {
-                if (control is not ButtonBase button)
+                if (control is not Button button)
                 {
                     return false;
                 }
@@ -108,7 +108,7 @@ namespace System.Windows.Forms
                     changed = true;
                     button.TextChanged += (o, e) =>
                     {
-                        if (o is ButtonBase b)
+                        if (o is Button b)
                         {
                             ToolTip.SetToolTip(b, $"{b.Text} .");
                         }
@@ -124,6 +124,7 @@ namespace System.Windows.Forms
                     }
                     else
                     {
+                        Label.Size = button.Size;
                         Label.Text = button.Text;
                         var im = Label.CaptureControlAsImage();
                         button.Image = im;
