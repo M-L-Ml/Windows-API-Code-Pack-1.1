@@ -1,548 +1,226 @@
-//Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using Microsoft.WindowsAPICodePack.Resources;
 using MS.WindowsAPICodePack.Internal;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
-    /// <summary>
-    /// Encapsulates the native logic required to create, configure, and show a TaskDialog, via the TaskDialogIndirect() Win32 function.
-    /// </summary>
-    /// <remarks>
-    /// A new instance of this class should be created for each messagebox show, as the HWNDs for TaskDialogs do not remain constant across
-    /// calls to TaskDialogIndirect.
-    /// </remarks>
-    internal class NativeTaskDialog : IDisposable
+    internal class NativeTaskDialog : Form
     {
-        private readonly TaskDialogNativeMethods.TaskDialogConfiguration nativeDialogConfig;
         private readonly TaskDialog outerDialog;
         private readonly NativeTaskDialogSettings settings;
-        private readonly IntPtr[] updatedStrings = new IntPtr[Enum.GetNames(typeof(TaskDialogNativeMethods.TaskDialogElements)).Length];
-        private IntPtr buttonArray, radioButtonArray;
-        private bool disposed;
 
-        // Flag tracks whether our first radio button click event has come through.
-        private bool firstRadioButtonClicked = true;
-
-        private IntPtr hWndDialog;
-
-        // Configuration is applied at dialog creation time.
-        internal NativeTaskDialog(NativeTaskDialogSettings settings, TaskDialog outerDialog)
-        {
-            nativeDialogConfig = settings.NativeConfiguration;
-            this.settings = settings;
-
-            // Wireup dialog proc message loop for this instance.
-            nativeDialogConfig.callback = new TaskDialogNativeMethods.TaskDialogCallback(DialogProc);
-
-            ShowState = DialogShowState.PreShow;
-
-            // Keep a reference to the outer shell, so we can notify.
-            this.outerDialog = outerDialog;
-        }
-
-        ~NativeTaskDialog()
-        {
-            Dispose(false);
-        }
+        private TableLayoutPanel tableLayoutPanel;
+        private Label instructionLabel;
+        private Label contentLabel;
+        private PictureBox mainIconPictureBox;
+        private FlowLayoutPanel buttonFlowLayoutPanel;
+        private Label footerLabel;
+        private PictureBox footerIconPictureBox;
+        private TextBox detailsTextBox;
+        private LinkLabel detailsExpander;
+        private CheckBox verificationCheckBox;
+        private ProgressBar progressBar;
 
         public bool CheckBoxChecked { get; private set; }
         public int SelectedButtonId { get; private set; }
         public int SelectedRadioButtonId { get; private set; }
         public DialogShowState ShowState { get; private set; }
 
-        // Finalizer and IDisposable implementation.
-        public void Dispose()
+        internal NativeTaskDialog(NativeTaskDialogSettings settings, TaskDialog outerDialog)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            this.settings = settings;
+            this.outerDialog = outerDialog;
 
-        internal void AssertCurrentlyShowing() => Debug.Assert(ShowState == DialogShowState.Showing,
-                "Update*() methods should only be called while native dialog is showing");
+            ShowState = DialogShowState.PreShow;
 
-        // The new task dialog does not support the existing Win32 functions for closing (e.g. EndDialog()); instead, a "click button"
-        // message is sent. In this case, we're abstracting out to say that the TaskDialog consumer can simply call "Close" and we'll "click"
-        // the cancel button. Note that the cancel button doesn't actually have to exist for this to work.
-        internal void NativeClose(TaskDialogResult result)
-        {
-            ShowState = DialogShowState.Closing;
+            InitializeComponent();
 
-            int id;
-            switch (result)
+            this.Text = settings.NativeConfiguration.windowTitle;
+            UpdateInstruction(settings.NativeConfiguration.mainInstruction);
+            UpdateText(settings.NativeConfiguration.content);
+            UpdateFooterText(settings.NativeConfiguration.footerText);
+            UpdateExpandedText(settings.NativeConfiguration.expandedInformation);
+            UpdateMainIcon((TaskDialogStandardIcon)settings.NativeConfiguration.mainIcon.iconId);
+            UpdateFooterIcon((TaskDialogStandardIcon)settings.NativeConfiguration.footerIcon.iconId);
+
+            if (settings.NativeConfiguration.verificationText != null)
             {
-                case TaskDialogResult.Close:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Close;
-                    break;
-
-                case TaskDialogResult.CustomButtonClicked:
-                    id = DialogsDefaults.MinimumDialogControlId; // custom buttons
-                    break;
-
-                case TaskDialogResult.No:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.No;
-                    break;
-
-                case TaskDialogResult.Ok:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Ok;
-                    break;
-
-                case TaskDialogResult.Retry:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Retry;
-                    break;
-
-                case TaskDialogResult.Yes:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Yes;
-                    break;
-
-                default:
-                    id = (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Cancel;
-                    break;
+                UpdateCheckBoxChecked(true);
+                verificationCheckBox.Text = settings.NativeConfiguration.verificationText;
+            }
+            else
+            {
+                UpdateCheckBoxChecked(false);
             }
 
-            SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.ClickButton, id, 0);
+            AddButtons();
         }
 
         internal void NativeShow()
         {
-            // Applies config struct and other settings, then calls main Win32 function.
-            if (settings == null)
+            ShowState = DialogShowState.Showing;
+            outerDialog.RaiseOpenedEvent();
+
+            DialogResult result = this.ShowDialog(settings.NativeConfiguration.parentHandle == IntPtr.Zero ? null : new Win32Window(settings.NativeConfiguration.parentHandle));
+
+            ShowState = DialogShowState.Closed;
+            this.CheckBoxChecked = this.verificationCheckBox.Checked;
+            this.SelectedRadioButtonId = 0; // Not implemented
+        }
+
+        internal void NativeClose(TaskDialogResult result)
+        {
+            this.DialogResult = ToDialogResult(result);
+            this.Close();
+        }
+
+        internal void AssertCurrentlyShowing() => Debug.Assert(ShowState == DialogShowState.Showing, "Update*() methods should only be called while native dialog is showing");
+
+        #region Update Methods
+
+        internal void UpdateText(string text) => UpdateLabel(contentLabel, text);
+        internal void UpdateInstruction(string instruction) => UpdateLabel(instructionLabel, instruction);
+        internal void UpdateFooterText(string footerText) => UpdateLabel(footerLabel, footerText);
+        internal void UpdateExpandedText(string expandedText) => UpdateTextBox(detailsTextBox, expandedText);
+
+        internal void UpdateMainIcon(TaskDialogStandardIcon mainIcon) => UpdateIcon(mainIconPictureBox, mainIcon);
+        internal void UpdateFooterIcon(TaskDialogStandardIcon footerIcon) => UpdateIcon(footerIconPictureBox, footerIcon);
+
+        internal void UpdateCheckBoxChecked(bool cbc) { if (InvokeRequired) Invoke(new Action(() => verificationCheckBox.Visible = cbc)); else verificationCheckBox.Visible = cbc; }
+
+        internal void UpdateProgressBarValue(int i) { if (InvokeRequired) Invoke(new Action(() => progressBar.Value = i)); else progressBar.Value = i; }
+        internal void UpdateProgressBarState(TaskDialogProgressBarState state) { if (InvokeRequired) Invoke(new Action(() => progressBar.Style = state == TaskDialogProgressBarState.Marquee ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous)); else progressBar.Style = state == TaskDialogProgressBarState.Marquee ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous; }
+        internal void UpdateProgressBarRange(int? min = null, int? max = null) { if (InvokeRequired) Invoke(new Action(() => { if (min.HasValue) progressBar.Minimum = min.Value; if (max.HasValue) progressBar.Maximum = max.Value; })); else { if (min.HasValue) progressBar.Minimum = min.Value; if (max.HasValue) progressBar.Maximum = max.Value; } }
+
+        internal void UpdateButtonEnabled(int buttonID, bool enabled) { UpdateButtonState(buttonID, enabled); }
+        internal void UpdateRadioButtonEnabled(int buttonID, bool enabled) { UpdateButtonState(buttonID, enabled); }
+        internal void UpdateElevationIcon(int buttonId, bool showIcon) { /* Not supported in WinForms */ }
+
+        #endregion
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            this.ClientSize = new System.Drawing.Size(484, 321);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Name = "WinFormsTaskDialog";
+            this.FormClosing += WinFormsTaskDialog_FormClosing;
+
+            tableLayoutPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 6 };
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            mainIconPictureBox = new PictureBox { Size = new Size(48, 48), SizeMode = PictureBoxSizeMode.StretchImage };
+            instructionLabel = new Label { AutoSize = true, Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold) };
+            contentLabel = new Label { AutoSize = true, MaximumSize = new Size(400, 0) };
+            detailsExpander = new LinkLabel { AutoSize = true, Text = "Show details" };
+            detailsTextBox = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, ReadOnly = true, Dock = DockStyle.Fill, Visible = false };
+            progressBar = new ProgressBar { Dock = DockStyle.Fill };
+            verificationCheckBox = new CheckBox { AutoSize = true };
+
+            tableLayoutPanel.Controls.Add(mainIconPictureBox, 0, 0);
+            tableLayoutPanel.SetRowSpan(mainIconPictureBox, 2);
+            tableLayoutPanel.Controls.Add(instructionLabel, 1, 0);
+            tableLayoutPanel.Controls.Add(contentLabel, 1, 1);
+            tableLayoutPanel.Controls.Add(detailsExpander, 1, 2);
+            tableLayoutPanel.Controls.Add(detailsTextBox, 1, 3);
+            tableLayoutPanel.Controls.Add(progressBar, 1, 4);
+            tableLayoutPanel.Controls.Add(verificationCheckBox, 1, 5);
+
+            detailsExpander.LinkClicked += (s, e) =>
             {
-                throw new InvalidOperationException(LocalizedMessages.NativeTaskDialogConfigurationError);
+                detailsTextBox.Visible = !detailsTextBox.Visible;
+                detailsExpander.Text = detailsTextBox.Visible ? "Hide details" : "Show details";
+            };
+
+            var footerPanel = new Panel { Dock = DockStyle.Bottom, Height = 30, BackColor = SystemColors.ControlLight };
+            footerIconPictureBox = new PictureBox { Size = new Size(16, 16), Location = new Point(10, 7) };
+            footerLabel = new Label { AutoSize = true, Location = new Point(35, 9) };
+            footerPanel.Controls.Add(footerIconPictureBox);
+            footerPanel.Controls.Add(footerLabel);
+
+            buttonFlowLayoutPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(10), Height = 50 };
+
+            this.Controls.Add(tableLayoutPanel);
+            this.Controls.Add(footerPanel);
+            this.Controls.Add(buttonFlowLayoutPanel);
+            this.ResumeLayout(false);
+        }
+
+        private void WinFormsTaskDialog_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (outerDialog.RaiseClosingEvent(this.SelectedButtonId) != 0)
+            {
+                e.Cancel = true;
             }
+        }
 
-            // Do a last-minute parse of the various dialog control lists, and only allocate the memory at the last minute.
-
-            MarshalDialogControlStructs();
-
-            // Make the call and show the dialog.
-            // NOTE: this call is BLOCKING, though the thread WILL re-enter via the DialogProc.
-            try
+        private void AddButtons()
+        {
+            if (settings.Buttons != null)
             {
-                ShowState = DialogShowState.Showing;
-
-                int selectedButtonId;
-                int selectedRadioButtonId;
-                bool checkBoxChecked;
-
-                // Here is the way we use "vanilla" P/Invoke to call TaskDialogIndirect().
-                HResult hresult;
-                using (new EnableThemingInScope(true))
+                foreach (var button in settings.Buttons)
                 {
-                    hresult = TaskDialogNativeMethods.TaskDialogIndirect(
-                        nativeDialogConfig,
-                        out selectedButtonId,
-                        out selectedRadioButtonId,
-                        out checkBoxChecked);
-                }
-
-                if (CoreErrorHelper.Failed(hresult))
-                {
-                    string msg;
-                    switch (hresult)
+                    var newButton = new Button { Text = button.text, Tag = button.buttonId };
+                    newButton.Click += (s, e) =>
                     {
-                        case HResult.InvalidArguments:
-                            msg = LocalizedMessages.NativeTaskDialogInternalErrorArgs;
-                            break;
-
-                        case HResult.OutOfMemory:
-                            msg = LocalizedMessages.NativeTaskDialogInternalErrorComplex;
-                            break;
-
-                        default:
-                            msg = string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                                LocalizedMessages.NativeTaskDialogInternalErrorUnexpected,
-                                hresult);
-                            break;
-                    }
-                    var e = Marshal.GetExceptionForHR((int)hresult);
-                    throw new Win32Exception(msg, e);
-                }
-
-                SelectedButtonId = selectedButtonId;
-                SelectedRadioButtonId = selectedRadioButtonId;
-                CheckBoxChecked = checkBoxChecked;
-            }
-            catch (EntryPointNotFoundException exc)
-            {
-                throw new NotSupportedException(LocalizedMessages.NativeTaskDialogVersionError, exc);
-            }
-            finally
-            {
-                ShowState = DialogShowState.Closed;
-            }
-        }
-
-        internal void UpdateButtonEnabled(int buttonID, bool enabled)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(
-                TaskDialogNativeMethods.TaskDialogMessages.EnableButton, buttonID, enabled == true ? 1 : 0);
-        }
-
-        internal void UpdateCheckBoxChecked(bool cbc)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(
-                TaskDialogNativeMethods.TaskDialogMessages.ClickVerification,
-                (cbc ? 1 : 0),
-                1);
-        }
-
-        internal void UpdateElevationIcon(int buttonId, bool showIcon)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(
-                TaskDialogNativeMethods.TaskDialogMessages.SetButtonElevationRequiredState,
-                buttonId,
-                Convert.ToInt32(showIcon));
-        }
-
-        internal void UpdateExpandedText(string expandedText) => UpdateTextCore(expandedText, TaskDialogNativeMethods.TaskDialogElements.ExpandedInformation);
-
-        internal void UpdateFooterIcon(TaskDialogStandardIcon footerIcon) => UpdateIconCore(footerIcon, TaskDialogNativeMethods.TaskDialogIconElement.Footer);
-
-        internal void UpdateFooterText(string footerText) => UpdateTextCore(footerText, TaskDialogNativeMethods.TaskDialogElements.Footer);
-
-        internal void UpdateInstruction(string instruction) => UpdateTextCore(instruction, TaskDialogNativeMethods.TaskDialogElements.MainInstruction);
-
-        internal void UpdateMainIcon(TaskDialogStandardIcon mainIcon) => UpdateIconCore(mainIcon, TaskDialogNativeMethods.TaskDialogIconElement.Main);
-
-        internal void UpdateProgressBarRange(int? min = null, int? max = null)
-        {
-            AssertCurrentlyShowing();
-
-            if (min.HasValue)
-                settings.ProgressBarMinimum = min.Value;
-            if (max.HasValue)
-                settings.ProgressBarMaximum = max.Value;
-
-            // Build range LPARAM - note it is in REVERSE intuitive order.
-            var range = NativeTaskDialog.MakeLongLParam(settings.ProgressBarMaximum, settings.ProgressBarMinimum);
-
-            SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.SetProgressBarRange, 0, range);
-        }
-
-        internal void UpdateProgressBarState(TaskDialogProgressBarState state)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.SetProgressBarState, (int)state, 0);
-        }
-
-        internal void UpdateProgressBarValue(int i)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.SetProgressBarPosition, i, 0);
-        }
-
-        internal void UpdateRadioButtonEnabled(int buttonID, bool enabled)
-        {
-            AssertCurrentlyShowing();
-            SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.EnableRadioButton,
-                buttonID, enabled == true ? 1 : 0);
-        }
-
-        internal void UpdateText(string text) => UpdateTextCore(text, TaskDialogNativeMethods.TaskDialogElements.Content);
-
-        // Core disposing logic.
-        protected void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                disposed = true;
-
-                // Single biggest resource - make sure the dialog itself has been instructed to close.
-
-                if (ShowState == DialogShowState.Showing)
-                {
-                    NativeClose(TaskDialogResult.Cancel);
-                }
-
-                // Clean up custom allocated strings that were updated while the dialog was showing. Note that the strings passed in the
-                // initial TaskDialogIndirect call will be cleaned up automagically by the default marshalling logic.
-
-                if (updatedStrings != null)
-                {
-                    for (var i = 0; i < updatedStrings.Length; i++)
-                    {
-                        if (updatedStrings[i] != IntPtr.Zero)
-                        {
-                            Marshal.FreeHGlobal(updatedStrings[i]);
-                            updatedStrings[i] = IntPtr.Zero;
-                        }
-                    }
-                }
-
-                // Clean up the button and radio button arrays, if any.
-                var sizeOfButton = Marshal.SizeOf(typeof(TaskDialogNativeMethods.TaskDialogButton));
-
-                if (buttonArray != IntPtr.Zero)
-                {
-                    for (var i = 0; i < settings.Buttons.Length; ++i)
-                    {
-                        var curItem = new IntPtr(buttonArray.ToInt64() + i * sizeOfButton);
-                        Marshal.DestroyStructure(curItem, typeof(TaskDialogNativeMethods.TaskDialogButton));
-                    }
-
-                    Marshal.FreeHGlobal(buttonArray);
-                    buttonArray = IntPtr.Zero;
-                }
-
-                if (radioButtonArray != IntPtr.Zero)
-                {
-                    for (var i = 0; i < settings.RadioButtons.Length; ++i)
-                    {
-                        var curItem = new IntPtr(radioButtonArray.ToInt64() + i * sizeOfButton);
-                        Marshal.DestroyStructure(curItem, typeof(TaskDialogNativeMethods.TaskDialogButton));
-                    }
-
-                    Marshal.FreeHGlobal(radioButtonArray);
-                    radioButtonArray = IntPtr.Zero;
-                }
-
-                if (disposing)
-                {
-                    // Clean up managed resources - currently there are none that are interesting.
-                }
-            }
-        }
-
-        private static IntPtr AllocateAndMarshalButtons(TaskDialogNativeMethods.TaskDialogButton[] structs)
-        {
-            var sizeOfButton = Marshal.SizeOf(typeof(TaskDialogNativeMethods.TaskDialogButton));
-            var initialPtr = Marshal.AllocHGlobal(sizeOfButton * structs.Length);
-            var currentPtr = initialPtr;
-
-            foreach (var button in structs)
-            {
-                Marshal.StructureToPtr(button, currentPtr, false);
-                currentPtr = new IntPtr(currentPtr.ToInt64() + sizeOfButton);
-            }
-
-            return initialPtr;
-        }
-
-        // Based on the following defines in WinDef.h and WinUser.h: #define MAKELPARAM(l, h) ((LPARAM)(DWORD)MAKELONG(l, h)) #define
-        // MAKELONG(a, b) ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
-        private static long MakeLongLParam(int a, int b) => (a << 16) + b;
-
-        private int DialogProc(
-                                                                                                                                            IntPtr windowHandle,
-            uint message,
-            IntPtr wparam,
-            IntPtr lparam,
-            IntPtr referenceData)
-        {
-            // Fetch the HWND - it may be the first time we're getting it.
-            hWndDialog = windowHandle;
-
-            // Big switch on the various notifications the dialog proc can get.
-            switch ((TaskDialogNativeMethods.TaskDialogNotifications)message)
-            {
-                case TaskDialogNativeMethods.TaskDialogNotifications.Created:
-                    var result = PerformDialogInitialization();
-                    outerDialog.RaiseOpenedEvent();
-                    return result;
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.ButtonClicked:
-                    return HandleButtonClick((int)wparam);
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.RadioButtonClicked:
-                    return HandleRadioButtonClick((int)wparam);
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.HyperlinkClicked:
-                    return HandleHyperlinkClick(lparam);
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.Help:
-                    return HandleHelpInvocation();
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.Timer:
-                    return HandleTick((int)wparam);
-
-                case TaskDialogNativeMethods.TaskDialogNotifications.Destroyed:
-                    return PerformDialogCleanup();
-
-                default:
-                    break;
-            }
-            return (int)HResult.Ok;
-        }
-
-        // Checks to see if the given element already has an updated string, and if so, frees it. This is done in preparation for a call to
-        // MakeNewString(), to prevent leaks from multiple updates calls on the same element within a single native dialog lifetime.
-        private void FreeOldString(TaskDialogNativeMethods.TaskDialogElements element)
-        {
-            var elementIndex = (int)element;
-            if (updatedStrings[elementIndex] != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(updatedStrings[elementIndex]);
-                updatedStrings[elementIndex] = IntPtr.Zero;
-            }
-        }
-
-        private int HandleButtonClick(int id)
-        {
-            // First we raise a Click event, if there is a custom button However, we implement Close() by sending a cancel button, so we
-            // don't want to raise a click event in response to that.
-            if (ShowState != DialogShowState.Closing)
-            {
-                outerDialog.RaiseButtonClickEvent(id);
-            }
-
-            // Once that returns, we raise a Closing event for the dialog The Win32 API handles button clicking-and-closing as an atomic
-            // action, but it is more .NET friendly to split them up. Unfortunately, we do NOT have the return values at this stage.
-            if (id < DialogsDefaults.MinimumDialogControlId)
-            {
-                return outerDialog.RaiseClosingEvent(id);
-            }
-
-            return (int)HResult.False;
-        }
-
-        private int HandleHelpInvocation()
-        {
-            outerDialog.RaiseHelpInvokedEvent();
-            return CoreErrorHelper.Ignored;
-        }
-
-        private int HandleHyperlinkClick(IntPtr href)
-        {
-            var link = Marshal.PtrToStringUni(href);
-            outerDialog.RaiseHyperlinkClickEvent(link);
-
-            return CoreErrorHelper.Ignored;
-        }
-
-        private int HandleRadioButtonClick(int id)
-        {
-            // When the dialog sets the radio button to default, it (somewhat confusingly)issues a radio button clicked event
-            // - we mask that out - though ONLY if we do have a default radio button
-            if (firstRadioButtonClicked
-                && !IsOptionSet(TaskDialogNativeMethods.TaskDialogOptions.NoDefaultRadioButton))
-            {
-                firstRadioButtonClicked = false;
-            }
-            else
-            {
-                outerDialog.RaiseButtonClickEvent(id);
-            }
-
-            // Note: we don't raise Closing, as radio buttons are non-committing buttons
-            return CoreErrorHelper.Ignored;
-        }
-
-        private int HandleTick(int ticks)
-        {
-            outerDialog.RaiseTickEvent(ticks);
-            return CoreErrorHelper.Ignored;
-        }
-
-        private bool IsOptionSet(TaskDialogNativeMethods.TaskDialogOptions flag) => ((nativeDialogConfig.taskDialogFlags & flag) == flag);
-
-        private IntPtr MakeNewString(string text, TaskDialogNativeMethods.TaskDialogElements element)
-        {
-            var newStringPtr = Marshal.StringToHGlobalUni(text);
-            updatedStrings[(int)element] = newStringPtr;
-            return newStringPtr;
-        }
-
-        // Allocates a new string on the unmanaged heap, and stores the pointer so we can free it later. Builds the actual configuration that
-        // the NativeTaskDialog (and underlying Win32 API) expects, by parsing the various control lists, marshaling to the unmanaged heap, etc.
-        private void MarshalDialogControlStructs()
-        {
-            if (settings.Buttons != null && settings.Buttons.Length > 0)
-            {
-                buttonArray = AllocateAndMarshalButtons(settings.Buttons);
-                settings.NativeConfiguration.buttons = buttonArray;
-                settings.NativeConfiguration.buttonCount = (uint)settings.Buttons.Length;
-            }
-
-            if (settings.RadioButtons != null && settings.RadioButtons.Length > 0)
-            {
-                radioButtonArray = AllocateAndMarshalButtons(settings.RadioButtons);
-                settings.NativeConfiguration.radioButtons = radioButtonArray;
-                settings.NativeConfiguration.radioButtonCount = (uint)settings.RadioButtons.Length;
-            }
-        }
-
-        // There should be little we need to do here, as the use of the NativeTaskDialog is that it is instantiated for a single show, then
-        // disposed of.
-        private int PerformDialogCleanup()
-        {
-            firstRadioButtonClicked = true;
-
-            return CoreErrorHelper.Ignored;
-        }
-
-        // Once the task dialog HWND is open, we need to send additional messages to configure it.
-        private int PerformDialogInitialization()
-        {
-            // Initialize Progress or Marquee Bar.
-            if (IsOptionSet(TaskDialogNativeMethods.TaskDialogOptions.ShowProgressBar))
-            {
-                UpdateProgressBarRange();
-
-                // The order of the following is important - state is more important than value, and non-normal states turn off the bar value
-                // change animation, which is likely the intended and preferable behavior.
-                UpdateProgressBarState(settings.ProgressBarState);
-                UpdateProgressBarValue(settings.ProgressBarValue);
-
-                // Due to a bug that wasn't fixed in time for RTM of Vista, second SendMessage is required if the state is non-Normal.
-                UpdateProgressBarValue(settings.ProgressBarValue);
-            }
-            else if (IsOptionSet(TaskDialogNativeMethods.TaskDialogOptions.ShowMarqueeProgressBar))
-            {
-                // TDM_SET_PROGRESS_BAR_MARQUEE is necessary to cause the marquee to start animating. Note that this internal task dialog
-                // setting is round-tripped when the marquee is is set to different states, so it never has to be touched/sent again.
-                SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages.SetProgressBarMarquee, 1, 0);
-                UpdateProgressBarState(settings.ProgressBarState);
-            }
-
-            if (settings.ElevatedButtons != null && settings.ElevatedButtons.Count > 0)
-            {
-                foreach (var id in settings.ElevatedButtons)
-                {
-                    UpdateElevationIcon(id, true);
+                        this.SelectedButtonId = button.buttonId;
+                        if (outerDialog.RaiseButtonClickEvent(button.buttonId)) { return; }
+                        this.DialogResult = DialogResult.OK;
+                    };
+                    buttonFlowLayoutPanel.Controls.Add(newButton);
                 }
             }
 
-            return CoreErrorHelper.Ignored;
+            var commonButtons = settings.NativeConfiguration.commonButtons;
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Ok)) AddButton("OK", DialogResult.OK, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Ok);
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Yes)) AddButton("Yes", DialogResult.Yes, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Yes);
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.No)) AddButton("No", DialogResult.No, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.No);
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Cancel)) AddButton("Cancel", DialogResult.Cancel, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Cancel);
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Retry)) AddButton("Retry", DialogResult.Retry, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Retry);
+            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Close)) AddButton("Close", DialogResult.Cancel, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Close);
         }
 
-        private int SendMessageHelper(TaskDialogNativeMethods.TaskDialogMessages message, int wparam, long lparam)
+        private void AddButton(string text, DialogResult dialogResult, int buttonId)
         {
-            // Be sure to at least assert here - messages to invalid handles often just disappear silently
-            Debug.Assert(hWndDialog != null, "HWND for dialog is null during SendMessage");
-
-            return (int)CoreNativeMethods.SendMessage(
-                hWndDialog,
-                (uint)message,
-                (IntPtr)wparam,
-                new IntPtr(lparam));
+            var button = new Button { Text = text, DialogResult = dialogResult, Tag = buttonId };
+            button.Click += (s, e) => { this.SelectedButtonId = buttonId; };
+            buttonFlowLayoutPanel.Controls.Add(button);
         }
 
-        private void UpdateIconCore(TaskDialogStandardIcon icon, TaskDialogNativeMethods.TaskDialogIconElement element)
+        private void UpdateIcon(PictureBox pb, TaskDialogStandardIcon iconEnum)
         {
-            AssertCurrentlyShowing();
-            SendMessageHelper(
-                TaskDialogNativeMethods.TaskDialogMessages.UpdateIcon,
-                (int)element,
-                (long)icon);
+            Icon icon = null;
+            switch (iconEnum)
+            {
+                case TaskDialogStandardIcon.Warning: icon = SystemIcons.Warning; break;
+                case TaskDialogStandardIcon.Error: icon = SystemIcons.Error; break;
+                case TaskDialogStandardIcon.Information: icon = SystemIcons.Information; break;
+                case TaskDialogStandardIcon.Shield: icon = SystemIcons.Shield; break;
+            }
+            if (InvokeRequired) Invoke(new Action(() => pb.Image = icon?.ToBitmap())); else pb.Image = icon?.ToBitmap();
         }
 
-        private void UpdateTextCore(string s, TaskDialogNativeMethods.TaskDialogElements element)
+        private void UpdateLabel(Label label, string text) { if (InvokeRequired) Invoke(new Action(() => label.Text = text)); else label.Text = text; }
+        private void UpdateTextBox(TextBox tb, string text) { if (InvokeRequired) Invoke(new Action(() => tb.Text = text)); else tb.Text = text; }
+        private void UpdateButtonState(int buttonID, bool enabled) { foreach (Control c in buttonFlowLayoutPanel.Controls) if (c is Button b && (int)b.Tag == buttonID) { if (InvokeRequired) Invoke(new Action(() => b.Enabled = enabled)); else b.Enabled = enabled; break; } }
+
+        private DialogResult ToDialogResult(TaskDialogResult result)
         {
-            AssertCurrentlyShowing();
-
-            FreeOldString(element);
-            SendMessageHelper(
-                TaskDialogNativeMethods.TaskDialogMessages.SetElementText,
-                (int)element,
-                (long)MakeNewString(s, element));
+            switch (result) { case TaskDialogResult.Ok: return DialogResult.OK; case TaskDialogResult.Cancel: return DialogResult.Cancel; case TaskDialogResult.Yes: return DialogResult.Yes; case TaskDialogResult.No: return DialogResult.No; case TaskDialogResult.Retry: return DialogResult.Retry; case TaskDialogResult.Close: return DialogResult.Cancel; default: return DialogResult.None; }
         }
+
+        private class Win32Window : IWin32Window { public IntPtr Handle { get; private set; } public Win32Window(IntPtr handle) { Handle = handle; } }
     }
 }
