@@ -6,9 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+//using static System.Net.Mime.MediaTypeNames;
 
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
@@ -48,8 +51,8 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             UpdateText(settings.NativeConfiguration.content);
             UpdateFooterText(settings.NativeConfiguration.footerText);
             UpdateExpandedText(settings.NativeConfiguration.expandedInformation);
-            UpdateMainIcon((TaskDialogStandardIcon)settings.NativeConfiguration.mainIcon.iconId);
-            UpdateFooterIcon((TaskDialogStandardIcon)settings.NativeConfiguration.footerIcon.iconId);
+            UpdateMainIcon((TaskDialogStandardIcon)settings.NativeConfiguration.mainIcon.MainIcon);
+            UpdateFooterIcon((TaskDialogStandardIcon)settings.NativeConfiguration.footerIcon.MainIcon);
 
             if (settings.NativeConfiguration.verificationText != null)
             {
@@ -129,14 +132,14 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             progressBar = new ProgressBar { Dock = DockStyle.Fill };
             verificationCheckBox = new CheckBox { AutoSize = true };
 
-            tableLayoutPanel.Controls.Add(mainIconPictureBox, 0, 0);
-            tableLayoutPanel.SetRowSpan(mainIconPictureBox, 2);
-            tableLayoutPanel.Controls.Add(instructionLabel, 1, 0);
-            tableLayoutPanel.Controls.Add(contentLabel, 1, 1);
-            tableLayoutPanel.Controls.Add(detailsExpander, 1, 2);
-            tableLayoutPanel.Controls.Add(detailsTextBox, 1, 3);
-            tableLayoutPanel.Controls.Add(progressBar, 1, 4);
-            tableLayoutPanel.Controls.Add(verificationCheckBox, 1, 5);
+            //tableLayoutPanel.Controls.Add(mainIconPictureBox, 0, 0);
+            //tableLayoutPanel.SetRowSpan(mainIconPictureBox, 2);
+            //tableLayoutPanel.Controls.Add(instructionLabel, 1, 0);
+            //tableLayoutPanel.Controls.Add(contentLabel, 1, 1);
+            //tableLayoutPanel.Controls.Add(detailsExpander, 1, 2);
+            //tableLayoutPanel.Controls.Add(detailsTextBox, 1, 3);
+            //tableLayoutPanel.Controls.Add(progressBar, 1, 4);
+            //tableLayoutPanel.Controls.Add(verificationCheckBox, 1, 5);
 
             detailsExpander.LinkClicked += (s, e) =>
             {
@@ -172,33 +175,81 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             {
                 foreach (var button in settings.Buttons)
                 {
-                    var newButton = new Button { Text = button.text, Tag = button.buttonId };
+                    var newButton = new Button { Text = button.buttonText, Tag = button.buttonId };
                     newButton.Click += (s, e) =>
                     {
                         this.SelectedButtonId = button.buttonId;
-                        if (outerDialog.RaiseButtonClickEvent(button.buttonId)) { return; }
+                        outerDialog.RaiseButtonClickEvent(button.buttonId);
+                        // if () { return; }
                         this.DialogResult = DialogResult.OK;
                     };
                     buttonFlowLayoutPanel.Controls.Add(newButton);
                 }
             }
 
-            var commonButtons = settings.NativeConfiguration.commonButtons;
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Ok)) AddButton("OK", DialogResult.OK, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Ok);
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Yes)) AddButton("Yes", DialogResult.Yes, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Yes);
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.No)) AddButton("No", DialogResult.No, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.No);
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Cancel)) AddButton("Cancel", DialogResult.Cancel, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Cancel);
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Retry)) AddButton("Retry", DialogResult.Retry, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Retry);
-            if (commonButtons.HasFlag(TaskDialogNativeMethods.TaskDialogCommonButtons.Close)) AddButton("Close", DialogResult.Cancel, (int)TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Close);
+            List<TaskDialogButtonBase> taskDialogButtonBases = this.Controls.OfType<TaskDialogButtonBase>().ToList();
+            ref var commonButtons = ref settings.NativeConfiguration.commonButtons;
+            foreach (var button in taskDialogButtonBases)
+            {
+                //  if (buttonT is TaskDialogButtonBB taskDialogButton)
+                //{
+                //    taskDialogButton.HostingDialog = this.outerDialog;
+                //    if (taskDialogButton.Default) taskDialogButton.Default = true; // Set as default buttonT if specified
+                //    if (taskDialogButton.Enabled) taskDialogButton.Enabled = true; // Set enabled state
+                //    AddButton(taskDialogButton.Text, DialogResult.OK, (int)taskDialogButton.Id);
+                //}
+                // var dd = new System.Windows.Forms.TaskDialogButton();
+                var defaultButton = DefaultButtonType.ButtonMappings.FirstOrDefault(b => b.Text == button.Name || b.Text == button.Text);
+                if (defaultButton.ButtonType != 0)
+                {
+                    AddButton(defaultButton);
+                }
+            }
+
+
+
+            foreach (var b in DefaultButtonType.ButtonMappings)
+            {
+                var (flag, text, result, returnId, _) = b;
+                if (commonButtons.HasFlag(flag))
+                {
+                    AddButton(b);
+                }
+            }
+
+
+            taskDialogButtonBases.ForEach(button =>
+            {
+                AddButtonBase(button);
+            });
         }
 
-        private void AddButton(string text, DialogResult dialogResult, int buttonId)
+        //  private void AddButton
+        private void AddButton(DefaultButtonType buttonT)
         {
+            (string text, DialogResult dialogResult, int buttonId) =
+                (buttonT.Text, buttonT.Result, (int)buttonT.ReturnId);
+
             var button = new Button { Text = text, DialogResult = dialogResult, Tag = buttonId };
             button.Click += (s, e) => { this.SelectedButtonId = buttonId; };
             buttonFlowLayoutPanel.Controls.Add(button);
-        }
 
+
+        }
+        private void AddButtonBase(TaskDialogButtonBase button)
+        {
+            button.HostingDialog = this.outerDialog;
+            var buttonControl = new Button { Text = button.Text, Tag = button.Id };
+            buttonFlowLayoutPanel.Controls.Add(buttonControl);
+            buttonControl.Click += (s, e) =>
+            {
+                //button.  Click?.Invoke(s,e);
+                this.SelectedButtonId = (int)button.Id;
+                outerDialog.RaiseButtonClickEvent(this.SelectedButtonId);
+                this.DialogResult = DialogResult.OK;
+            };
+
+        }
         private void UpdateIcon(PictureBox pb, TaskDialogStandardIcon iconEnum)
         {
             Icon icon = null;
@@ -222,5 +273,52 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         }
 
         private class Win32Window : IWin32Window { public IntPtr Handle { get; private set; } public Win32Window(IntPtr handle) { Handle = handle; } }
+    }
+
+    internal record struct DefaultButtonType(TaskDialogNativeMethods.TaskDialogCommonButtons ButtonType, string Text, DialogResult Result,
+        TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds ReturnId,
+        TaskDialogButton ButtonObject
+        )
+    {
+        [return: MaybeNull]
+        public static DefaultButtonType? GetStandartButtonInfoOrNull(TaskDialogButtonBase buttonBase)
+        {
+            var res = DefaultButtonType.ButtonMappings.FirstOrDefault(bt => bt.ButtonObject == buttonBase);
+            if (res == default)
+            {
+                return null;
+            }
+            return res;
+        }
+
+        //public static implicit operator (TaskDialogNativeMethods.TaskDialogCommonButtons ButtonType, string Text, DialogResult Result, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds ReturnId)(DefaultButtonType value)
+        //{
+        //    return (value.ButtonType, value.Text, value.Result, value.ReturnId);
+        //}
+
+        //public static implicit operator DefaultButtonType((TaskDialogNativeMethods.TaskDialogCommonButtons ButtonType, string Text, DialogResult Result, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds ReturnId) value)
+        //{
+        //    return new DefaultButtonType(value.ButtonType, value.Text, value.Result, value.ReturnId);
+        //}
+
+        public TaskDialogStandardButtons TaskDialogStandardButton
+        {
+            get
+            {
+                return TaskDialog.MapButtonIdToStandardButton((int)ReturnId);
+            }
+        }
+
+        public static readonly DefaultButtonType[] ButtonMappings =
+            {
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.Ok, "OK", DialogResult.OK, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Ok
+
+                    ,TaskDialogButton.OK),
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.Yes, "Yes", DialogResult.Yes, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Yes,TaskDialogButton.Yes),
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.No, "No", DialogResult.No, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.No, TaskDialogButton.No),
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.Cancel, "Cancel", DialogResult.Cancel, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Cancel, TaskDialogButton.Cancel),
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.Retry, "Retry", DialogResult.Retry, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Retry, TaskDialogButton.Retry),
+                new(TaskDialogNativeMethods.TaskDialogCommonButtons.Close, "Close", DialogResult.Cancel, TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds.Close, TaskDialogButton.Close)
+            };
     }
 }

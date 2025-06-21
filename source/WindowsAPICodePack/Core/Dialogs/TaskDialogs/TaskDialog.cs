@@ -5,6 +5,7 @@ using MS.WindowsAPICodePack.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
@@ -133,7 +134,30 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 defaultButton = value;
             }
         }
-
+        public TaskDialogButton DefaultButtonObj
+        {
+            set
+            {
+                if (value == null) { DefaultButton = TaskDialogDefaultButton.None; return; }
+                var bi = DefaultButtonType.GetStandartButtonInfoOrNull(value);
+                if (bi != null)
+                {
+                    var returnId = bi.Value.ReturnId;
+                    if (Enum.TryParse<TaskDialogDefaultButton>(returnId.ToString(), out var dbValue))
+                    {
+                        DefaultButton = dbValue;
+                    }
+                    else
+                    {
+                        Trace.Assert(false, "unhandled returnId: " + returnId);
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid DefaultButton value", paramName: nameof(DefaultButtonObj));
+                }
+            }
+        }
         /// <summary>Gets or sets a value that contains the collapsed control text.</summary>
         public string DetailsCollapsedLabel
         {
@@ -351,6 +375,9 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         private bool NativeDialogShowing => (nativeDialog != null)
                             && (nativeDialog.ShowState == DialogShowState.Showing
                             || nativeDialog.ShowState == DialogShowState.Closing);
+
+        public TaskDialogButtonBase LastFiredButton { get; private set; }
+
 
         /// <summary>Creates and shows a task dialog with the specified message text.</summary>
         /// <param name="text">The text to display.</param>
@@ -600,6 +627,7 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             // If a custom button was found, raise the event - if not, it's a standard button, and we don't support custom event handling for
             // the standard buttons
             if (button != null) { button.RaiseClickEvent(); }
+            LastFiredButton = button;
         }
 
         // Gives event subscriber a chance to prevent the dialog from closing, based on the current state of the app and the button used to
@@ -728,7 +756,7 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             return TaskDialogNativeMethods.NoDefaultButtonSpecified;
         }
 
-        private static TaskDialogStandardButtons MapButtonIdToStandardButton(int id)
+        public static TaskDialogStandardButtons MapButtonIdToStandardButton(int id)
         {
             switch ((TaskDialogNativeMethods.TaskDialogCommonButtonReturnIds)id)
             {
@@ -1026,8 +1054,17 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 }
                 else if (buttonBase != null)
                 {
-                    if (buttons == null) { buttons = new List<TaskDialogButtonBase>(); }
-                    buttons.Add(buttonBase);
+                    var standartB = DefaultButtonType.GetStandartButtonInfoOrNull(buttonBase);
+                    if (standartB != null)
+                    {
+                        standardButtons |= standartB.Value.TaskDialogStandardButton;
+                    }
+                    else
+                    {
+                        if (buttons == null) { buttons = new List<TaskDialogButtonBase>(); }
+
+                        buttons.Add(buttonBase);
+                    }
                 }
                 else if ((progBar = control as TaskDialogProgressBar) != null)
                 {
@@ -1039,6 +1076,8 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 }
             }
         }
+
+
 
         // Helper to map the standard button IDs returned by TaskDialogIndirect to the standard button ID enum - note that we can't just
         // cast, as the Win32 typedefs differ incoming and outgoing.

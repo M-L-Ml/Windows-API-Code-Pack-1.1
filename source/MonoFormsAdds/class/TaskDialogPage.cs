@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 
 namespace System.Windows.Forms
 {
+    using Microsoft.WindowsAPICodePack.Dialogs;
+    using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
     /// as Base class
     using TaskDialogButtonBB = Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButton;
@@ -32,7 +34,7 @@ namespace System.Windows.Forms
         public string Text { get; set; }
         public string Caption { get; set; }
         public string Heading { get; set; }
-        public object Icon { get; set; }
+        public TaskDialogIcon Icon { get; set; }
         public TaskDialogVerificationCheckBox Verification { get; set; }
         public bool SizeToContent { get; set; }
 
@@ -41,9 +43,35 @@ namespace System.Windows.Forms
         /// </summary>
         public Collection<TaskDialogButtonBB> Buttons { get; set; } = new();
         public bool AllowCancel { get; set; }
-        public TaskDialogButton DefaultButton { get; set; }
+        public TaskDialogButtonBB DefaultButton { get; set; }
         public string Footnote { get; set; }
         public event EventHandler? Created;
+
+        internal Microsoft.WindowsAPICodePack.Dialogs.TaskDialog CreateDialog()
+        {
+            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog r = new()
+            {
+                Text = Text,
+                Icon = Icon.StandardIcon,
+                Caption = Caption,
+                FooterText = Footnote,
+                InstructionText = Heading,
+                // AllowCancel = page.AllowCancel,
+                DefaultButtonObj = DefaultButton
+            };
+            //TODO: use https://www.nuget.org/packages/cmdwtf.Luminous.Windows.Forms https://github.com/cmdwtf/Luminous/blob/main/Luminous.Windows.Forms/TaskDialog/TaskDialogForm.cs
+            // or https://github.com/gitextensions/PSTaskDialog
+            /// "           This code is part of the T8SuitePro.
+            //This code was written by matiasclaesson.
+            //The original code is available here:
+            //https://github.com/mattiasclaesson/T8SuitePro.git"
+            // ==https://github.com/mattiasclaesson/TuningSuites/blob/master/PSTaskDialog/PSTaskDialog/frmTaskDialog.cs 
+            // == https://github.com/Andrew414/dmark/blob/e5ae552d6c5df593bde280b8fe00967d2519f92d/C%23/PSTaskDialog/PSTaskDialog/frmTaskDialog.cs - what was used in the past days of Mono through an dll
+            // == https://github.com/mRemoteNG/mRemoteNG/blob/v1.78.2-dev/mRemoteNG/UI/TaskDialog/frmTaskDialog.cs
+            // ==https://github.com/lextudio/codebeautifiercollection/tree/master/thirdparties/PSTaskDialog
+
+            return r;
+        }
     }
     public sealed class LinkClicked2EventArgs : LinkClickedEventArgs
     {
@@ -62,26 +90,27 @@ namespace System.Windows.Forms
     /// </summary>
     public static class TaskDialog
     {
-        public static TaskDialogButtonBB ShowDialog(nint handle, TaskDialogPage page)
+        public static TaskDialogButtonBase ShowDialog(nint handle, TaskDialogPage page)
         {
 
             return ShowDialog(page);
         }
 
-        public static TaskDialogButtonBB ShowDialog(IWin32Window owner, TaskDialogPage page)
+        public static TaskDialogButtonBase ShowDialog(IWin32Window owner, TaskDialogPage page)
         {
             return ShowDialog(page);
         }
 
-        public static TaskDialogButtonBB ShowDialog(TaskDialogPage page)
+        public static Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButtonBase
+            ShowDialog(TaskDialogPage page)
         {
-            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog d = new();
+            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog d = page.CreateDialog();
             foreach (var b in page.Buttons)
             {
                 d.Controls.Add(b);
             }
             Microsoft.WindowsAPICodePack.Dialogs.TaskDialogResult taskDialogResult;
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (Environment.OSVersion.Platform != PlatformID.Other)
             {
                 taskDialogResult = d.Show();
             }
@@ -95,22 +124,29 @@ namespace System.Windows.Forms
 
 
             var result = taskDialogResult;
-
-            //TODO:  find button with result;
-            return (TaskDialogButtonBB)(d.Controls.FirstOrDefault(b => (b as TaskDialogButton)?.Text == result.ToString()) ?? d.Controls.FirstOrDefault());
+            return d.LastFiredButton;
+            //  find button with result;
+            //return (TaskDialogButtonBB)(d.Controls.FirstOrDefault(b => (b as TaskDialogButton)?.Text == result.ToString()) ?? d.Controls.FirstOrDefault());
         }
     }
 
     public class TaskDialogIcon //System.Drawing.Icon : IDisposable
     {
-        public static readonly TaskDialogIcon Warning = new();
+        public static readonly TaskDialogIcon Warning = new(TaskDialogStandardIcon.Warning);
 
         /// <summary>
         ///   Gets a standard <see cref="TaskDialogIcon"/> instance where the task dialog
         ///   contains an icon consisting of white X in a circle with a red background.
         /// </summary>
-        public static readonly TaskDialogIcon Error = new();
-        public static readonly TaskDialogIcon Information = new();
+        public static readonly TaskDialogIcon Error = new(TaskDialogStandardIcon.Error);
+        public static readonly TaskDialogIcon Information = new(TaskDialogStandardIcon.Information);
+
+        public TaskDialogIcon(TaskDialogStandardIcon icon)
+        {
+            StandardIcon = icon;
+        }
+
+        public TaskDialogStandardIcon StandardIcon { get; }
     }
 
     //    new TaskDialogVerificationCheckBox
@@ -133,13 +169,18 @@ namespace System.Windows.Forms
         public TaskDialogButton(string name) : base(MakeNonEmpty(name), MakeNonEmpty(name))
         {
         }
-
-        public static readonly TaskDialogButton Cancel = new TaskDialogButton("Cancel");
-        public static readonly TaskDialogButton Yes = new TaskDialogButton("Yes");
-        public static readonly TaskDialogButton No = new TaskDialogButton("No");
-        public static readonly TaskDialogButton OK = new TaskDialogButton("OK");
-        public static readonly TaskDialogButton Close = new TaskDialogButton("Close");
-        public static readonly TaskDialogButton Help = new TaskDialogButton("Help");
+        public static new TaskDialogButtonBB Cancel => TaskDialogButtonBB.Cancel;
+        public static new TaskDialogButtonBB Yes => TaskDialogButtonBB.Yes;
+        public static new TaskDialogButtonBB No => TaskDialogButtonBB.No;
+        public static new TaskDialogButtonBB OK => TaskDialogButtonBB.OK;
+        public static new TaskDialogButtonBB Close => TaskDialogButtonBB.Close;
+        public static new TaskDialogButtonBB Help => TaskDialogButtonBB.Help;
+        //public static readonly TaskDialogButton Cancel = new TaskDialogButton("Cancel");
+        //public static readonly TaskDialogButton Yes = new TaskDialogButton("Yes");
+        //public static readonly TaskDialogButton No = new TaskDialogButton("No");
+        //public static readonly TaskDialogButton OK = new TaskDialogButton("OK");
+        //public static readonly TaskDialogButton Close = new TaskDialogButton("Close");
+        //public static readonly TaskDialogButton Help = new TaskDialogButton("Help");
     }
     public sealed class TaskDialogCommandLinkButton : Microsoft.WindowsAPICodePack.Dialogs.TaskDialogCommandLink
     {

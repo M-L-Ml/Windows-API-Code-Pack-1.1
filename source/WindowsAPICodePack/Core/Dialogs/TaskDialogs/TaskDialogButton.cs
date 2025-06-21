@@ -26,5 +26,15 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 ApplyPropertyChange("ShowElevationIcon");
             }
         }
+
+
+        public static readonly TaskDialogButton Cancel = new TaskDialogButton(){ Name = "Cancel" //, Id=2
+        };
+        public static readonly TaskDialogButton Yes = new TaskDialogButton { Name = "Yes" };
+        public static readonly TaskDialogButton No = new TaskDialogButton{ Name = "No"};
+        public static readonly TaskDialogButton OK = new TaskDialogButton{ Name = "OK"};
+        public static readonly TaskDialogButton Close = new TaskDialogButton{ Name = "Close"};
+        public static readonly TaskDialogButton Help = new TaskDialogButton{ Name = "Help"};
+        public static readonly TaskDialogButton Retry = new TaskDialogButton{ Name = "Retry" };
     }
 }
