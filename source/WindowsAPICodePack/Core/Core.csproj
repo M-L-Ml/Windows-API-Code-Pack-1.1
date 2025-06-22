@@ -59,6 +59,9 @@
     <PackageReference Include="Core.System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\PSTaskDialog\PSTaskDialog\PSTaskDialog.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="Resources\LocalizedMessages.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
