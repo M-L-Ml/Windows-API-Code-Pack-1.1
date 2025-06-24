@@ -888,12 +888,14 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 dialogConfig.parentHandle = ownerWindow;
                //TODO: nativeDialog.Owner
             }
-
+            dialogConfig.mainIcon = new TaskDialogNativeMethods.IconUnion((int)icon);
+            dialogConfig.footerIcon = new TaskDialogNativeMethods.IconUnion((int)footerIcon);
             // Other miscellaneous sets.
-            nativeDialog.MainIcon = (PSTaskDialog.eSysIcons)icon;
+            
+            //nativeDialog.MainIcon = (PSTaskDialog.eSysIcons)icon;
            // dialogConfig.footerIcon
 
-                nativeDialog.FooterIcon  = (PSTaskDialog.eSysIcons)footerIcon;
+               /// nativeDialog.FooterIcon  = (PSTaskDialog.eSysIcons)footerIcon;
           //  nativeDialog.CommandButtons
               dialogConfig.commonButtons = (TaskDialogNativeMethods.TaskDialogCommonButtons)standardButtons;
             dialogConfig.defaultButtonIndex = (int)defaultButton;
@@ -1017,9 +1019,9 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
                 // Create settings object for new dialog, based on current state.
                 var settings = new NativeTaskDialogSettings();
-                nativeDialog = new NativeTaskDialog(settings, this);
                 ApplyCoreSettings(settings);
                 ApplySupplementalSettings(settings);
+                nativeDialog = new NativeTaskDialog(settings, this);
 
                 // Show the dialog.
                 // NOTE: this is a BLOCKING call; the dialog proc callbacks will be executed by the same thread as the Show() call before the

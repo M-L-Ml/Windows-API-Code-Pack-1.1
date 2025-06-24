@@ -148,8 +148,11 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             [Out] out int radioButton,
             [MarshalAs(UnmanagedType.Bool), Out] out bool verificationFlagChecked);
 
-        // Value for TASKDIALOGCONFIG.cxWidth
-        // NOTE: We include a "spacer" so that the struct size varies on 64-bit architectures.
+        /// <summary>
+        /// Value for TASKDIALOGCONFIG.cxWidth
+        /// NOTE: We include a "spacer" so that the struct size varies on 64-bit architectures.
+        /// mainIcon format compatible with <see cref="Microsoft.WindowsAPICodePack.Dialogs.TaskDialogStandardIcon"/>
+        /// </summary>
         [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto)]
         internal struct IconUnion
         {
