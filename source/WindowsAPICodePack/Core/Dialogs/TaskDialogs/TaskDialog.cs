@@ -619,6 +619,11 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         }
 
         // All Raise*() methods are called by the NativeTaskDialog when various pseudo-controls are triggered.
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id">DialogControl.Id</param>
         internal void RaiseButtonClickEvent(int id)
         {
             // First check to see if the ID matches a custom button.
@@ -881,12 +886,16 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             if (ownerWindow != IntPtr.Zero)
             {
                 dialogConfig.parentHandle = ownerWindow;
+               //TODO: nativeDialog.Owner
             }
 
             // Other miscellaneous sets.
-            dialogConfig.mainIcon = new TaskDialogNativeMethods.IconUnion((int)icon);
-            dialogConfig.footerIcon = new TaskDialogNativeMethods.IconUnion((int)footerIcon);
-            dialogConfig.commonButtons = (TaskDialogNativeMethods.TaskDialogCommonButtons)standardButtons;
+            nativeDialog.MainIcon = (PSTaskDialog.eSysIcons)icon;
+           // dialogConfig.footerIcon
+
+                nativeDialog.FooterIcon  = (PSTaskDialog.eSysIcons)footerIcon;
+          //  nativeDialog.CommandButtons
+              dialogConfig.commonButtons = (TaskDialogNativeMethods.TaskDialogCommonButtons)standardButtons;
             dialogConfig.defaultButtonIndex = (int)defaultButton;
         }
 
@@ -987,6 +996,11 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
         }
 
         // NOTE: we are going to require names be unique across both buttons and radio buttons, even though the Win32 API allows them to be separate.
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private TaskDialogButtonBase GetButtonForId(int id) => (TaskDialogButtonBase)controls.GetControlbyId(id);
 
         private TaskDialogResult ShowCore()
@@ -1003,13 +1017,13 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
                 // Create settings object for new dialog, based on current state.
                 var settings = new NativeTaskDialogSettings();
+                nativeDialog = new NativeTaskDialog(settings, this);
                 ApplyCoreSettings(settings);
                 ApplySupplementalSettings(settings);
 
                 // Show the dialog.
                 // NOTE: this is a BLOCKING call; the dialog proc callbacks will be executed by the same thread as the Show() call before the
                 // thread of execution contines to the end of this method.
-                nativeDialog = new NativeTaskDialog(settings, this);
                 nativeDialog.NativeShow();
 
                 // Build and return dialog result to public API - leaving it null after an exception is thrown is fine in this case

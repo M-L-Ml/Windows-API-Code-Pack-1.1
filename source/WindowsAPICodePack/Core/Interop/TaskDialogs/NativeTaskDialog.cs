@@ -2,6 +2,7 @@
 
 using Microsoft.WindowsAPICodePack.Resources;
 using MS.WindowsAPICodePack.Internal;
+using PSTaskDialog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,26 +16,57 @@ using System.Windows.Forms;
 
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
-    internal class NativeTaskDialog : Form
+    internal class NativeTaskDialog1 : PSTaskDialog.frmTaskDialog
+    {
+
+    }
+    public static class EExtensions
+    {
+        public static eSysIcons ConvertToESysIcon(this TaskDialogStandardIcon icon)
+        {
+            return icon switch
+            {
+                TaskDialogStandardIcon.Warning => eSysIcons.Warning,
+                TaskDialogStandardIcon.Error => eSysIcons.Error,
+                TaskDialogStandardIcon.Information => eSysIcons.Information,
+                TaskDialogStandardIcon.Shield => eSysIcons.Question,
+                _ => eSysIcons.Question,
+            };
+        }
+        public static DialogResult ToDialogResult(this TaskDialogResult result)
+        {
+            return result switch
+            {
+                TaskDialogResult.Ok => DialogResult.OK,
+                TaskDialogResult.Cancel => DialogResult.Cancel,
+                TaskDialogResult.Yes => DialogResult.Yes,
+                TaskDialogResult.No => DialogResult.No,
+                TaskDialogResult.Retry => DialogResult.Retry,
+                TaskDialogResult.Close => DialogResult.Cancel,
+                _ => DialogResult.None,
+            };
+        }
+    }
+    internal class NativeTaskDialog : PSTaskDialog.frmTaskDialog
     {
         private readonly TaskDialog outerDialog;
         private readonly NativeTaskDialogSettings settings;
 
-        private TableLayoutPanel tableLayoutPanel;
-        private Label instructionLabel;
-        private Label contentLabel;
-        private PictureBox mainIconPictureBox;
-        private FlowLayoutPanel buttonFlowLayoutPanel;
-        private Label footerLabel;
-        private PictureBox footerIconPictureBox;
-        private TextBox detailsTextBox;
-        private LinkLabel detailsExpander;
-        private CheckBox verificationCheckBox;
+        private TableLayoutPanel tableLayoutPanel => base.panel5;
+      //  private Label instructionLabel => base.pnlMainInstruction;
+        //private Label contentLabel;
+        //private PictureBox mainIconPictureBox;
+        //private FlowLayoutPanel buttonFlowLayoutPanel;
+        //private Label footerLabel;
+        //private PictureBox footerIconPictureBox;
+        //private TextBox detailsTextBox;
+        //private LinkLabel detailsExpander;
+        //private CheckBox verificationCheckBox;
         private ProgressBar progressBar;
 
-        public bool CheckBoxChecked { get; private set; }
-        public int SelectedButtonId { get; private set; }
-        public int SelectedRadioButtonId { get; private set; }
+        public bool CheckBoxChecked => VerificationCheckBoxChecked;
+        public int SelectedButtonId => base.CommandButtonClickedIndex;
+        public int SelectedRadioButtonId => base.RadioButtonIndex;
         public DialogShowState ShowState { get; private set; }
 
         internal NativeTaskDialog(NativeTaskDialogSettings settings, TaskDialog outerDialog)
@@ -56,27 +88,28 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
             if (settings.NativeConfiguration.verificationText != null)
             {
-                UpdateCheckBoxChecked(true);
-                verificationCheckBox.Text = settings.NativeConfiguration.verificationText;
+                UpdateCheckBoxChecked(true);//this.verificationCheckBox//cbVerify                    .Text 
+                base.VerificationText = settings.NativeConfiguration.verificationText;
             }
             else
             {
                 UpdateCheckBoxChecked(false);
             }
 
-            AddButtons();
         }
 
         internal void NativeShow()
         {
+            AddButtons();
+            BuildForm();
             ShowState = DialogShowState.Showing;
             outerDialog.RaiseOpenedEvent();
 
             DialogResult result = this.ShowDialog(settings.NativeConfiguration.parentHandle == IntPtr.Zero ? null : new Win32Window(settings.NativeConfiguration.parentHandle));
 
             ShowState = DialogShowState.Closed;
-            this.CheckBoxChecked = this.verificationCheckBox.Checked;
-            this.SelectedRadioButtonId = 0; // Not implemented
+            //this.CheckBoxChecked = this.verificationCheckBox.Checked;
+           // this.SelectedRadioButtonId = 0; // Not implemented
         }
 
         internal void NativeClose(TaskDialogResult result)
@@ -89,17 +122,29 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
         #region Update Methods
 
-        internal void UpdateText(string text) => UpdateLabel(contentLabel, text);
-        internal void UpdateInstruction(string instruction) => UpdateLabel(instructionLabel, instruction);
-        internal void UpdateFooterText(string footerText) => UpdateLabel(footerLabel, footerText);
-        internal void UpdateExpandedText(string expandedText) => UpdateTextBox(detailsTextBox, expandedText);
+        internal void UpdateText(string text) => base.Title = text; // UpdateLabel(contentLabel, text);
+        internal void UpdateInstruction(string instruction) => base.MainInstruction = instruction; //UpdateLabel(instructionLabel, instruction);
+        internal void UpdateFooterText(string footerText) => base.Footer = footerText; // UpdateLabel(footerLabel, footerText);
+        internal void UpdateExpandedText(string expandedText) => base.ExpandedInfo = expandedText; // UpdateTextBox(detailsTextBox, expandedText);
 
-        internal void UpdateMainIcon(TaskDialogStandardIcon mainIcon) => UpdateIcon(mainIconPictureBox, mainIcon);
-        internal void UpdateFooterIcon(TaskDialogStandardIcon footerIcon) => UpdateIcon(footerIconPictureBox, footerIcon);
+        internal void UpdateMainIcon(TaskDialogStandardIcon mainIcon) => base.MainIcon = mainIcon.ConvertToESysIcon();
 
-        internal void UpdateCheckBoxChecked(bool cbc) { if (InvokeRequired) Invoke(new Action(() => verificationCheckBox.Visible = cbc)); else verificationCheckBox.Visible = cbc; }
+        // UpdateIcon(mainIconPictureBox, mainIcon);
+        internal void UpdateFooterIcon(TaskDialogStandardIcon footerIcon) => base.FooterIcon = footerIcon.ConvertToESysIcon(); // UpdateIcon(footerIconPictureBox, footerIcon);
 
-        internal void UpdateProgressBarValue(int i) { if (InvokeRequired) Invoke(new Action(() => progressBar.Value = i)); else progressBar.Value = i; }
+        internal void UpdateCheckBoxChecked(bool cbc)
+        {
+
+            base.VerificationCheckBoxChecked = cbc;
+            //    if (InvokeRequired) Invoke(new Action(() => verificationCheckBox.Visible = cbc)); else verificationCheckBox.Visible = cbc;
+        }
+
+        internal void UpdateProgressBarValue(int i)
+        {
+            //   base.
+            if (InvokeRequired) Invoke(new Action(() => progressBar.Value = i)); else progressBar.Value = i;
+
+        }
         internal void UpdateProgressBarState(TaskDialogProgressBarState state) { if (InvokeRequired) Invoke(new Action(() => progressBar.Style = state == TaskDialogProgressBarState.Marquee ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous)); else progressBar.Style = state == TaskDialogProgressBarState.Marquee ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous; }
         internal void UpdateProgressBarRange(int? min = null, int? max = null) { if (InvokeRequired) Invoke(new Action(() => { if (min.HasValue) progressBar.Minimum = min.Value; if (max.HasValue) progressBar.Maximum = max.Value; })); else { if (min.HasValue) progressBar.Minimum = min.Value; if (max.HasValue) progressBar.Maximum = max.Value; } }
 
@@ -120,17 +165,17 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             this.Name = "WinFormsTaskDialog";
             this.FormClosing += WinFormsTaskDialog_FormClosing;
 
-            tableLayoutPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 6 };
+            //   tableLayoutPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 6 };
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            mainIconPictureBox = new PictureBox { Size = new Size(48, 48), SizeMode = PictureBoxSizeMode.StretchImage };
-            instructionLabel = new Label { AutoSize = true, Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold) };
-            contentLabel = new Label { AutoSize = true, MaximumSize = new Size(400, 0) };
-            detailsExpander = new LinkLabel { AutoSize = true, Text = "Show details" };
-            detailsTextBox = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, ReadOnly = true, Dock = DockStyle.Fill, Visible = false };
+            //mainIconPictureBox = new PictureBox { Size = new Size(48, 48), SizeMode = PictureBoxSizeMode.StretchImage };
+            //instructionLabel = new Label { AutoSize = true, Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold) };
+            //contentLabel = new Label { AutoSize = true, MaximumSize = new Size(400, 0) };
+            //detailsExpander = new LinkLabel { AutoSize = true, Text = "Show details" };
+            //detailsTextBox = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, ReadOnly = true, Dock = DockStyle.Fill, Visible = false };
             progressBar = new ProgressBar { Dock = DockStyle.Fill };
-            verificationCheckBox = new CheckBox { AutoSize = true };
+            //verificationCheckBox = new CheckBox { AutoSize = true };
 
             //tableLayoutPanel.Controls.Add(mainIconPictureBox, 0, 0);
             //tableLayoutPanel.SetRowSpan(mainIconPictureBox, 2);
@@ -138,26 +183,26 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             //tableLayoutPanel.Controls.Add(contentLabel, 1, 1);
             //tableLayoutPanel.Controls.Add(detailsExpander, 1, 2);
             //tableLayoutPanel.Controls.Add(detailsTextBox, 1, 3);
-            //tableLayoutPanel.Controls.Add(progressBar, 1, 4);
+            tableLayoutPanel.Controls.Add(progressBar, 1, 4);
             //tableLayoutPanel.Controls.Add(verificationCheckBox, 1, 5);
 
-            detailsExpander.LinkClicked += (s, e) =>
-            {
-                detailsTextBox.Visible = !detailsTextBox.Visible;
-                detailsExpander.Text = detailsTextBox.Visible ? "Hide details" : "Show details";
-            };
+            //detailsExpander.LinkClicked += (s, e) =>
+            //{
+            //    detailsTextBox.Visible = !detailsTextBox.Visible;
+            //    detailsExpander.Text = detailsTextBox.Visible ? "Hide details" : "Show details";
+            //};
 
-            var footerPanel = new Panel { Dock = DockStyle.Bottom, Height = 30, BackColor = SystemColors.ControlLight };
-            footerIconPictureBox = new PictureBox { Size = new Size(16, 16), Location = new Point(10, 7) };
-            footerLabel = new Label { AutoSize = true, Location = new Point(35, 9) };
-            footerPanel.Controls.Add(footerIconPictureBox);
-            footerPanel.Controls.Add(footerLabel);
+            //var footerPanel = new Panel { Dock = DockStyle.Bottom, Height = 30, BackColor = SystemColors.ControlLight };
+            //footerIconPictureBox = new PictureBox { Size = new Size(16, 16), Location = new Point(10, 7) };
+            //footerLabel = new Label { AutoSize = true, Location = new Point(35, 9) };
+            //footerPanel.Controls.Add(footerIconPictureBox);
+            //footerPanel.Controls.Add(footerLabel);
 
-            buttonFlowLayoutPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(10), Height = 50 };
+        //    buttonFlowLayoutPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(10), Height = 50 };
 
             this.Controls.Add(tableLayoutPanel);
-            this.Controls.Add(footerPanel);
-            this.Controls.Add(buttonFlowLayoutPanel);
+            //this.Controls.Add(footerPanel);
+            //this.Controls.Add(buttonFlowLayoutPanel);
             this.ResumeLayout(false);
         }
 
@@ -169,26 +214,34 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             }
         }
 
+        protected override bool CommandButton_ClickVirtual(CommandButton sender, EventArgs e)
+        {
+            outerDialog.RaiseButtonClickEvent((int)sender.Tag);
+            return true;
+        }
+
         private void AddButtons()
         {
             if (settings.Buttons != null)
             {
                 foreach (var button in settings.Buttons)
                 {
-                    var newButton = new Button { Text = button.buttonText, Tag = button.buttonId };
-                    newButton.Click += (s, e) =>
-                    {
-                        this.SelectedButtonId = button.buttonId;
-                        outerDialog.RaiseButtonClickEvent(button.buttonId);
-                        // if () { return; }
-                        this.DialogResult = DialogResult.OK;
-                    };
-                    buttonFlowLayoutPanel.Controls.Add(newButton);
+                    //var newButton = new Button { Text = button.buttonText, Tag = button.buttonId };
+                    //newButton.Click += (s, e) =>
+                    //{
+                    //   // this.SelectedButtonId = button.buttonId;
+                    //    outerDialog.RaiseButtonClickEvent(button.buttonId);
+                    //    // if () { return; }
+                    //  //  this.DialogResult = DialogResult.OK;
+                    //};
+                    //  base.pnlButtons.         buttonFlowLayoutPanel.Controls.Add(newButton);
+                   
                 }
+                base.CommandButtons = settings.Buttons.Select(b=> ValueTuple.Create(b.buttonText,(object)b.buttonId) ).ToArray();
             }
 
             List<TaskDialogButtonBase> taskDialogButtonBases = this.Controls.OfType<TaskDialogButtonBase>().ToList();
-            ref var commonButtons = ref settings.NativeConfiguration.commonButtons;
+            var commonButtons =  settings.NativeConfiguration.commonButtons;
             foreach (var button in taskDialogButtonBases)
             {
                 //  if (buttonT is TaskDialogButtonBB taskDialogButton)
@@ -199,57 +252,64 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
                 //    AddButton(taskDialogButton.Text, DialogResult.OK, (int)taskDialogButton.Id);
                 //}
                 // var dd = new System.Windows.Forms.TaskDialogButton();
-                var defaultButton = DefaultButtonType.ButtonMappings.FirstOrDefault(b => b.Text == button.Name || b.Text == button.Text);
-                if (defaultButton.ButtonType != 0)
-                {
-                    AddButton(defaultButton);
-                }
+  //DefaultButtonType.GetStandartButtonInfoOrNull(button);
+
+  //              var defaultButton = DefaultButtonType.ButtonMappings.FirstOrDefault(b =>
+  //              {
+  //                  bool found =  b==
+  //                  return b.Text == button.Name || b.Text == button.Text;
+  //              });
+  //              if (defaultButton.ButtonType != 0)
+  //              {
+  //                  AddButton(defaultButton);
+  //              }
             }
+           
+            base.Buttons = (eTaskDialogButtons)commonButtons;
+            base.DefaultButtonIndex = (int)settings.NativeConfiguration.defaultButtonIndex;
+
+            //foreach (var b in DefaultButtonType.ButtonMappings)
+            //{
+            //    var (flag, text, result, returnId, _) = b;
+            //    if (commonButtons.HasFlag(flag))
+            //    {
+            //        AddButton(b);
+            //    }
+            //}
 
 
-
-            foreach (var b in DefaultButtonType.ButtonMappings)
-            {
-                var (flag, text, result, returnId, _) = b;
-                if (commonButtons.HasFlag(flag))
-                {
-                    AddButton(b);
-                }
-            }
-
-
-            taskDialogButtonBases.ForEach(button =>
-            {
-                AddButtonBase(button);
-            });
+            //taskDialogButtonBases.ForEach(button =>
+            //{
+            //    AddButtonBase(button);
+            //});
         }
 
         //  private void AddButton
-        private void AddButton(DefaultButtonType buttonT)
-        {
-            (string text, DialogResult dialogResult, int buttonId) =
-                (buttonT.Text, buttonT.Result, (int)buttonT.ReturnId);
+        //private void AddButton(DefaultButtonType buttonT)
+        //{
+        //    (string text, DialogResult dialogResult, int buttonId) =
+        //        (buttonT.Text, buttonT.Result, (int)buttonT.ReturnId);
 
-            var button = new Button { Text = text, DialogResult = dialogResult, Tag = buttonId };
-            button.Click += (s, e) => { this.SelectedButtonId = buttonId; };
-            buttonFlowLayoutPanel.Controls.Add(button);
+        //    var button = new Button { Text = text, DialogResult = dialogResult, Tag = buttonId };
+        //    button.Click += (s, e) => { this.SelectedButtonId = buttonId; };
+        //    buttonFlowLayoutPanel.Controls.Add(button);
 
 
-        }
-        private void AddButtonBase(TaskDialogButtonBase button)
-        {
-            button.HostingDialog = this.outerDialog;
-            var buttonControl = new Button { Text = button.Text, Tag = button.Id };
-            buttonFlowLayoutPanel.Controls.Add(buttonControl);
-            buttonControl.Click += (s, e) =>
-            {
-                //button.  Click?.Invoke(s,e);
-                this.SelectedButtonId = (int)button.Id;
-                outerDialog.RaiseButtonClickEvent(this.SelectedButtonId);
-                this.DialogResult = DialogResult.OK;
-            };
+        //}
+        //private void AddButtonBase(TaskDialogButtonBase button)
+        //{
+        //    button.HostingDialog = this.outerDialog;
+        //    var buttonControl = new Button { Text = button.Text, Tag = button.Id };
+        //    buttonFlowLayoutPanel.Controls.Add(buttonControl);
+        //    buttonControl.Click += (s, e) =>
+        //    {
+        //        //button.  Click?.Invoke(s,e);
+        //        this.SelectedButtonId = (int)button.Id;
+        //        outerDialog.RaiseButtonClickEvent(this.SelectedButtonId);
+        //        this.DialogResult = DialogResult.OK;
+        //    };
 
-        }
+        //}
         private void UpdateIcon(PictureBox pb, TaskDialogStandardIcon iconEnum)
         {
             Icon icon = null;
@@ -265,11 +325,35 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
         private void UpdateLabel(Label label, string text) { if (InvokeRequired) Invoke(new Action(() => label.Text = text)); else label.Text = text; }
         private void UpdateTextBox(TextBox tb, string text) { if (InvokeRequired) Invoke(new Action(() => tb.Text = text)); else tb.Text = text; }
-        private void UpdateButtonState(int buttonID, bool enabled) { foreach (Control c in buttonFlowLayoutPanel.Controls) if (c is Button b && (int)b.Tag == buttonID) { if (InvokeRequired) Invoke(new Action(() => b.Enabled = enabled)); else b.Enabled = enabled; break; } }
+        private void UpdateButtonState(object buttonID, bool enabled)
+        {
+
+            var allButtons = pnlCommandButtons.Controls.Cast<Control>().Concat(pnlButtons.Controls.Cast<Control>()).ToArray();
+
+            foreach (Control c in allButtons)
+            {
+                if (c is not Button b)
+                {
+                    continue;
+                }
+                if (b.Tag.Equals(buttonID))
+                {
+                    if (InvokeRequired)
+                    {
+                        Invoke(new Action(() => b.Enabled = enabled));
+                    }
+                    else
+                    {
+                        b.Enabled = enabled;
+                    }
+                    break;
+                }
+            }
+        }
 
         private DialogResult ToDialogResult(TaskDialogResult result)
         {
-            switch (result) { case TaskDialogResult.Ok: return DialogResult.OK; case TaskDialogResult.Cancel: return DialogResult.Cancel; case TaskDialogResult.Yes: return DialogResult.Yes; case TaskDialogResult.No: return DialogResult.No; case TaskDialogResult.Retry: return DialogResult.Retry; case TaskDialogResult.Close: return DialogResult.Cancel; default: return DialogResult.None; }
+            return result.ToDialogResult();
         }
 
         private class Win32Window : IWin32Window { public IntPtr Handle { get; private set; } public Win32Window(IntPtr handle) { Handle = handle; } }

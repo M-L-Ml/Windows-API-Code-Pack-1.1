@@ -48,7 +48,10 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
             Close = 8
         }
 
-        // Task Dialog - identifies common buttons.
+        /// <summary>
+        /// Task Dialog - identifies common buttons.
+        /// Can be casted to <see cref="TaskDialogStandardButtons"/>
+        /// </summary>
         [Flags]
         internal enum TaskDialogCommonButtons
         {
@@ -154,6 +157,12 @@ namespace Microsoft.WindowsAPICodePack.Dialogs
 
             [FieldOffset(0)]
             private readonly IntPtr mainIcon;
+
+            //public static implicit operator PSTaskDialog.eSysIcons(IconUnion icon)
+            //{
+            //    //todo: check
+            //    return (PSTaskDialog.eSysIcons)icon.mainIcon;
+            //}
 
             /// <summary>Gets the handle to the Icon</summary>
             public IntPtr MainIcon => mainIcon;

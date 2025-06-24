@@ -4,7 +4,9 @@ using System;
 
 namespace Microsoft.WindowsAPICodePack.Dialogs
 {
-    /// <summary>Identifies one of the standard buttons that can be displayed via TaskDialog.</summary>
+    /// <summary>Identifies one of the standard buttons that can be displayed via TaskDialog.
+    /// Can be casted to <see cref="TaskDialogNativeMethods.TaskDialogCommonButtons"/>
+    /// </summary>
     [Flags]
     public enum TaskDialogStandardButtons
     {

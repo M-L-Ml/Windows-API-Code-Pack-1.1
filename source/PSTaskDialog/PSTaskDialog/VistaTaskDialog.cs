@@ -126,7 +126,7 @@ namespace PSTaskDialog
     ButtonClicked = 2,            // wParam = Button ID
 
     /// <summary>
-    /// Sent by the Task Dialog when the user clicks on a hyperlink in the Task Dialog’s content.
+    /// Sent by the Task Dialog when the user clicks on a hyperlink in the Task Dialogï¿½s content.
     /// The string containing the HREF of the hyperlink will be available in the
     /// TaskDialogNotificationArgs. To prevent the TaskDialog from shell executing the hyperlink,
     /// the application must return TRUE, otherwise ShellExecute will be called.
@@ -270,7 +270,7 @@ namespace PSTaskDialog
     private string mainInstruction;
 
     /// <summary>
-    /// The string to be used for the dialog’s primary content. If the EnableHyperlinks member is true,
+    /// The string to be used for the dialogï¿½s primary content. If the EnableHyperlinks member is true,
     /// then this string may contain hyperlinks in the form: <A HREF="executablestring">Hyperlink Text</A>. 
     /// WARNING: Enabling hyperlinks when using content from an unsafe source may cause security vulnerabilities.
     /// </summary>
@@ -394,7 +394,7 @@ namespace PSTaskDialog
     private object callbackData;
 
     /// <summary>
-    /// Specifies the width of the Task Dialog’s client area in DLU’s. If 0, Task Dialog will calculate the ideal width.
+    /// Specifies the width of the Task Dialogï¿½s client area in DLUï¿½s. If 0, Task Dialog will calculate the ideal width.
     /// </summary>
     private uint width;
 
@@ -448,7 +448,7 @@ namespace PSTaskDialog
     }
 
     /// <summary>
-    /// The string to be used for the dialog’s primary content. If the EnableHyperlinks member is true,
+    /// The string to be used for the dialogï¿½s primary content. If the EnableHyperlinks member is true,
     /// then this string may contain hyperlinks in the form: <A HREF="executablestring">Hyperlink Text</A>. 
     /// WARNING: Enabling hyperlinks when using content from an unsafe source may cause security vulnerabilities.
     /// </summary>
@@ -574,7 +574,7 @@ namespace PSTaskDialog
     }
 
     /// <summary>
-    /// Indicates that the dialog should be able to be closed using Alt-F4, Escape and the title bar’s
+    /// Indicates that the dialog should be able to be closed using Alt-F4, Escape and the title barï¿½s
     /// close button even if no cancel button is specified in either the CommonButtons or Buttons members.
     /// </summary>
     public bool AllowDialogCancellation
@@ -587,8 +587,8 @@ namespace PSTaskDialog
     /// Indicates that the buttons specified in the Buttons member should be displayed as command links
     /// (using a standard task dialog glyph) instead of push buttons.  When using command links, all
     /// characters up to the first new line character in the ButtonText member (of the TaskDialogButton
-    /// structure) will be treated as the command link’s main text, and the remainder will be treated
-    /// as the command link’s note. This flag is ignored if the Buttons member has no entires.
+    /// structure) will be treated as the command linkï¿½s main text, and the remainder will be treated
+    /// as the command linkï¿½s note. This flag is ignored if the Buttons member has no entires.
     /// </summary>
     public bool UseCommandLinks
     {
@@ -600,7 +600,7 @@ namespace PSTaskDialog
     /// Indicates that the buttons specified in the Buttons member should be displayed as command links
     /// (without a glyph) instead of push buttons. When using command links, all characters up to the
     /// first new line character in the ButtonText member (of the TaskDialogButton structure) will be
-    /// treated as the command link’s main text, and the remainder will be treated as the command link’s
+    /// treated as the command linkï¿½s main text, and the remainder will be treated as the command linkï¿½s
     /// note. This flag is ignored if the Buttons member has no entires.
     /// </summary>
     public bool UseCommandLinksNoIcon
@@ -611,7 +611,7 @@ namespace PSTaskDialog
 
     /// <summary>
     /// Indicates that the string specified by the ExpandedInformation member should be displayed at the
-    /// bottom of the dialog’s footer area instead of immediately after the dialog’s content. This flag
+    /// bottom of the dialogï¿½s footer area instead of immediately after the dialogï¿½s content. This flag
     /// is ignored if the ExpandedInformation member is null.
     /// </summary>
     public bool ExpandFooterArea
@@ -660,7 +660,7 @@ namespace PSTaskDialog
     }
 
     /// <summary>
-    /// Indicates that the TaskDialog’s callback should be called approximately every 200 milliseconds.
+    /// Indicates that the TaskDialogï¿½s callback should be called approximately every 200 milliseconds.
     /// </summary>
     public bool CallbackTimer
     {

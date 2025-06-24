@@ -5,7 +5,7 @@ namespace PSTaskDialog
     /// <summary>
     /// Required designer variable.
     /// </summary>
-    private System.ComponentModel.IContainer components = null;
+    protected System.ComponentModel.IContainer components = null;
 
     /// <summary>
     /// Clean up any resources being used.
@@ -26,7 +26,7 @@ namespace PSTaskDialog
     /// Required method for Designer support - do not modify
     /// the contents of this method with the code editor.
     /// </summary>
-    private void InitializeComponent()
+    protected void InitializeComponent()
     {
       this.components = new System.ComponentModel.Container();
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTaskDialog));
@@ -43,7 +43,7 @@ namespace PSTaskDialog
       this.pnlFooter = new System.Windows.Forms.Panel();
       this.lbFooter = new System.Windows.Forms.Label();
       this.imgFooter = new System.Windows.Forms.PictureBox();
-      this.panel5 = new System.Windows.Forms.Panel();
+      this.panel5 = new System.Windows.Forms.TableLayoutPanel();
       this.panel3 = new System.Windows.Forms.Panel();
       this.pnlCommandButtons = new System.Windows.Forms.Panel();
       this.pnlMainInstruction = new System.Windows.Forms.Panel();
@@ -309,26 +309,28 @@ namespace PSTaskDialog
 
     #endregion
 
-    private System.Windows.Forms.PictureBox imgMain;
-    private System.Windows.Forms.Label lbContent;
-    private System.Windows.Forms.Panel pnlButtons;
-    private System.Windows.Forms.Panel panel2;
-    private System.Windows.Forms.Panel pnlFooter;
-    private System.Windows.Forms.Panel panel3;
-    private System.Windows.Forms.Panel panel5;
-    private System.Windows.Forms.PictureBox imgFooter;
-    private System.Windows.Forms.Label lbFooter;
-    private System.Windows.Forms.ImageList imageList1;
-    private System.Windows.Forms.Label lbShowHideDetails;
-    private System.Windows.Forms.Panel pnlCommandButtons;
-    private System.Windows.Forms.CheckBox cbVerify;
-    private System.Windows.Forms.Panel pnlMainInstruction;
-    private System.Windows.Forms.Panel pnlContent;
-    private System.Windows.Forms.Panel pnlExpandedInfo;
-    private System.Windows.Forms.Label lbExpandedInfo;
-    private System.Windows.Forms.Panel pnlRadioButtons;
-    private System.Windows.Forms.Button bt1;
-    private System.Windows.Forms.Button bt2;
-    private System.Windows.Forms.Button bt3;
+    protected System.Windows.Forms.PictureBox imgMain;
+    protected System.Windows.Forms.Label lbContent;
+    protected System.Windows.Forms.Panel pnlButtons;
+        // in pnlButtons
+        protected System.Windows.Forms.Panel panel2;
+    protected System.Windows.Forms.Panel pnlFooter;
+        // in pnlFooter
+    protected System.Windows.Forms.Panel panel3;
+    protected System.Windows.Forms.TableLayoutPanel panel5;
+    protected System.Windows.Forms.PictureBox imgFooter;
+    protected System.Windows.Forms.Label lbFooter;
+    protected System.Windows.Forms.ImageList imageList1;
+    protected System.Windows.Forms.Label lbShowHideDetails;
+    protected System.Windows.Forms.Panel pnlCommandButtons;
+    protected System.Windows.Forms.CheckBox cbVerify;
+    protected System.Windows.Forms.Panel pnlMainInstruction;
+    protected System.Windows.Forms.Panel pnlContent;
+    protected System.Windows.Forms.Panel pnlExpandedInfo;
+    protected System.Windows.Forms.Label lbExpandedInfo;
+    protected System.Windows.Forms.Panel pnlRadioButtons;
+    protected System.Windows.Forms.Button bt1;
+    protected System.Windows.Forms.Button bt2;
+    protected System.Windows.Forms.Button bt3;
   }
 }
