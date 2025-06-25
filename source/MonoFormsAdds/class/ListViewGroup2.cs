@@ -29,16 +29,22 @@ namespace System.Windows.Forms
         //}
 
         //public string Name { get; set; }
-        public static void CollapsedState(this ListViewGroup t, ListViewGroupCollapsedState _)
-        {
+        public static void CollapsedState(this ListViewGroup t, ListViewGroupCollapsedState s)
+        {//t.ListView.
+#if WINDOWS_OWN
+            t.CollapsedState = s;
+#else
             //t.CollapsedState = default;
-            //Debug.Assert(false, "TODO implement");
-
+            Debug.WriteLine( "TODO implement ListViewGroup .CollapsedState");
+#endif
         }
-        public static void TaskLink(this ListViewGroup t, string _)
+        public static void TaskLink(this ListViewGroup t, string tlink)
         {
-
-            //Debug.Assert(false, "TODO implement");
+#if WINDOWS_OWN
+            t.TaskLink = tlink;
+#else
+            Debug.WriteLine( "TODO implement ListViewGroup .TaskLink");
+#endif
         }
     }
 
