@@ -42,7 +42,12 @@ namespace PSTaskDialog
         static public int EmulatedFormWidth = 450;
         static public bool ForceEmulationMode = false;
         static public bool UseToolWindowOnXP = true;
-        static public bool PlaySystemSounds = true;
+
+        /// <summary>
+        /// System.Media.SystemSounds seems not supported on Linux, at least in the System.Windows.Extensions v9.0.
+        /// TODO: Check if this is true for older versions System.Windows.Extensions.
+        /// </summary>
+        static public bool PlaySystemSounds = Environment.OSVersion.Platform == PlatformID.Win32NT;
         static public EventHandler OnTaskDialogShown = null;
         static public EventHandler OnTaskDialogClosed = null;
 

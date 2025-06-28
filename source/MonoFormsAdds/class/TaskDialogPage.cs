@@ -104,27 +104,40 @@ namespace System.Windows.Forms
         public static Microsoft.WindowsAPICodePack.Dialogs.TaskDialogButtonBase
             ShowDialog(TaskDialogPage page)
         {
-            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog d = page.CreateDialog();
-            foreach (var b in page.Buttons)
+            Microsoft.WindowsAPICodePack.Dialogs.TaskDialog d = null;
+
+            try
             {
-                d.Controls.Add(b);
-            }
-            Microsoft.WindowsAPICodePack.Dialogs.TaskDialogResult taskDialogResult;
-            if (Environment.OSVersion.Platform != PlatformID.Other)
-            {
-                taskDialogResult = d.Show();
-            }
-            else
-            {
-                Debug.Assert(false);
-                throw new NotImplementedException(" not implemented ");
-                // TODO: use derived from System.Windows.Forms.CommonDialog  Forms.Form  f = new();
-                // taskDialogResult = d.Show(owner: null);
-            }
+                d = page.CreateDialog();
+                foreach (var b in page.Buttons)
+                {
+                    d.Controls.Add(b);
+                }
+                Microsoft.WindowsAPICodePack.Dialogs.TaskDialogResult taskDialogResult;
+                if (Environment.OSVersion.Platform != PlatformID.Other)
+                {
+                    taskDialogResult = d.Show();
+                }
+                else
+                {
+                    Debug.Assert(false);
+                    throw new NotImplementedException(" not implemented ");
+                    // TODO: use derived from System.Windows.Forms.CommonDialog  Forms.Form  f = new();
+                    // taskDialogResult = d.Show(owner: null);
+                }
 
 
-            var result = taskDialogResult;
-            return d.LastFiredButton;
+                var result = taskDialogResult;
+                return d.LastFiredButton;
+            }
+            finally
+            {
+                foreach (var b in page.Buttons)
+                {
+                    Debug.Assert(b.HostingDialog == d || b.HostingDialog == null);
+                    b.HostingDialog = null;
+                }
+            }
             //  find button with result;
             //return (TaskDialogButtonBB)(d.Controls.FirstOrDefault(b => (b as TaskDialogButton)?.Text == result.ToString()) ?? d.Controls.FirstOrDefault());
         }
