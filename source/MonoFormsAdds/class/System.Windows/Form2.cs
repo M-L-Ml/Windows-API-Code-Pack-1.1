@@ -9,7 +9,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
+/// <summary>
+/// Fixing non displayed Button text in Linux : workaround 
+/// </summary>
 namespace System.Windows.Forms
 {
     public class Form2 : Form
@@ -39,6 +41,20 @@ namespace System.Windows.Forms
 
     public static class ControlExtensions2
     {
+        /// <summary>
+        /// Fixing non displayed Button text in Linux : workaround 
+        /// </summary>
+        public static int AddTooltipsAndIconsToButtons(this Control parent, Image? image = null, ToolTip? toolTip = null)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                // this bug is not on Windows
+                return 0;
+            }
+
+            var command = new AddTooltipsAndIconsToButtonsCommand() { Image = image, ToolTip = toolTip };
+            return TraverseControls(parent, command);
+        }
 
         public static IEnumerable<ToolTip> GetToolTipComponents(this Control frm)
         {
@@ -159,13 +175,6 @@ namespace System.Windows.Forms
         }
 
 
-        public static int AddTooltipsAndIconsToButtons(this Control parent, Image? image = null, ToolTip? toolTip = null)
-        {
-
-
-            var command = new AddTooltipsAndIconsToButtonsCommand() { Image = image, ToolTip = toolTip };
-            return TraverseControls(parent, command);
-        }
 
         public static void SetToolTipFastTiming(this ToolTip toolTip)
         {
