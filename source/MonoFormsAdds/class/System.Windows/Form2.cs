@@ -51,7 +51,11 @@ namespace System.Windows.Forms
                 // this bug is not on Windows
                 return 0;
             }
-
+            if (Environment.OSVersion.Version.Major >= 6)
+            {
+                return 0;
+            }
+            //this bug detected on WSL2 Ubuntu kernel version 5
             var command = new AddTooltipsAndIconsToButtonsCommand() { Image = image, ToolTip = toolTip };
             return TraverseControls(parent, command);
         }
