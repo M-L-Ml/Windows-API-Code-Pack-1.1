@@ -336,6 +336,7 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
             {
                 // Dispose managed resources
                 Icon.Dispose();
+                Icon = null;
                 tooltip = null;
             }
         }
