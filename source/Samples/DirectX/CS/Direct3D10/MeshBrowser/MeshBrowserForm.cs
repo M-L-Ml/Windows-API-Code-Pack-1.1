@@ -16,7 +16,7 @@ namespace MeshBrowser
 {
     /// <summary>
     /// This application demonstrates how to use the library to implement a useful utility application
-    /// 
+    ///
     /// Copyright (c) Microsoft Corporation. All rights reserved.
     /// </summary>
     public partial class MeshBrowserForm : Form
@@ -50,7 +50,7 @@ namespace MeshBrowser
         public MeshBrowserForm()
         {
             InitializeComponent();
-        } 
+        }
         #endregion
 
         #region Window_Load()
@@ -61,7 +61,7 @@ namespace MeshBrowser
             directControl.Render = this.RenderScene;
             string dxsdkdir = Environment.GetEnvironmentVariable("DXSDK_DIR");
             if (!string.IsNullOrEmpty(dxsdkdir))
-                openFileDialog1.InitialDirectory = System.IO.Path.Combine(dxsdkdir, "Samples\\Media");
+                openFileDialog1.InitialDirectory = System.IO.Path.Combine(dxsdkdir, "Samples", "Media");
             if (File.Exists("knownFiles.xml"))
                 LoadKnown();
             else
